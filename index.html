@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>投資日誌筆記與 PDCA 覆盤系統</title>
+    <title>投資日誌筆記</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #ffffff; color: #37352f; margin: 0; padding: 0; }
         .container { max-width: 1250px; margin: 0 auto; padding: 0 20px 50px 20px; }
@@ -40,26 +40,46 @@
         
         /* 標籤設計 */
         .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
-        .tag-red { background: #fce8e8; color: #9a3131; }
         .tag-green { background: #e6f4ea; color: #1e6235; }
+        .tag-orange { background: #faebd7; color: #9c5b14; }
+        .tag-blue { background: #d3e5ef; color: #183347; }
         .tag-gray { background: #e3e2e0; color: #32302c; }
         .profit { color: #d94228; }
         .loss { color: #438767; }
 
-        /* PDCA 覆盤頁面專屬排版 (對應圖片樣式) */
+        /* 報告與筆記專用排版 */
+        .note-form { background: #fdfdfc; border: 1px solid #ededed; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-col { flex: 1; }
+        .note-form label { display: block; font-size: 12px; font-weight: 600; color: #787774; margin-bottom: 6px; }
+        .note-form input, .note-form select, .note-form textarea { width: 100%; padding: 8px 10px; border: 1px solid #e1e1e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
+        .note-form textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+        .btn-submit { background: #37352f; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-submit:hover { background: #2f2d27; }
+
+        .note-card { border: 1px solid #ededed; border-radius: 8px; padding: 24px; margin-bottom: 20px; background: #fff; }
+        .note-header { margin-bottom: 15px; border-bottom: 1px solid #f1f1f0; padding-bottom: 15px; position: relative;}
+        .note-title { font-size: 20px; font-weight: 700; margin: 0 0 10px 0; }
+        .note-meta { display: flex; gap: 10px; font-size: 13px; color: #787774; align-items: center; }
+        .note-body { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .note-section { margin-bottom: 15px; }
+        .note-section h5 { margin: 0 0 8px 0; font-size: 14px; color: #37352f; }
+        .note-section p { margin: 0; font-size: 14px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
+        .btn-del-note { position: absolute; right: 0; top: 0; background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; }
+        .btn-del-note:hover { color: #c62828; }
+
+        /* PDCA 覆盤內頁 */
         .pdca-header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #ededed; padding-bottom: 15px; margin-bottom: 20px; }
         .pdca-title-input { font-size: 24px; font-weight: 700; border: none; outline: none; width: 100%; font-family: inherit; }
         .pdca-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .pdca-box { background: #fafafa; border: 1px solid #e1e1e1; border-radius: 8px; padding: 15px; }
         .pdca-box h3 { margin-top: 0; font-size: 15px; background: #f2eef0; padding: 6px 10px; border-radius: 4px; border-left: 4px solid #37352f; }
         .pdca-box textarea { width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-sizing: border-box; font-family: inherit; font-size: 13px; resize: vertical; min-height: 80px; }
-        
         .pdca-grid-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .act-box { background: #f4f0f8; border-radius: 8px; padding: 15px; border: 1px solid #e8def8; }
         .act-box h3 { background: #eaddff; color: #21005d; }
         .reminder-box { background: #fce8e6; border-radius: 8px; padding: 15px; border: 1px solid #fadcda; }
         .reminder-box h3 { background: #fad2cf; color: #5c1410; }
-        
         .back-btn { background: #f1f1f0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 5px; }
         .back-btn:hover { background: #e3e2e0; }
     </style>
@@ -69,29 +89,29 @@
     <div class="container">
         <div class="header-title">投資日誌筆記：個人資產管理&決策思考</div>
         <div class="header-desc">
-            💡 結合 PDCA 循環，嚴格執行做單規劃、執行檢核與行動改善。<br>
-            ⚠️ 不預設立場，讓每一次進場都經得起客觀覆盤。
+            💡 結合資產追蹤、報告筆記與 PDCA 循環，保持客觀，嚴格控管短波段風險。
         </div>
 
         <div class="main-layout">
-            <!-- 左側邊欄 -->
+            <!-- 左側邊欄：完整保留所有分頁 -->
             <div class="sidebar">
                 <div class="sidebar-box box-yellow">
                     <h4>📁 資料庫</h4>
                     <div class="sidebar-item active" onclick="switchView('table')">🎯 投資標的&績效</div>
                     <div class="sidebar-item" onclick="switchView('trans')">☑️ 投資交易紀錄</div>
-                    <div class="sidebar-item" onclick="switchView('pdca')">📝 交易日誌與PDCA覆盤</div>
+                    <div class="sidebar-item" onclick="switchView('notes')">🔖 投資分析&筆記 (報告區)</div>
+                    <div class="sidebar-item" onclick="switchView('pdca')">📝 PDCA 交易日誌覆盤</div>
                 </div>
                 <div class="sidebar-box box-gray">
                     <h4>📝 MEMO</h4>
-                    <div style="font-size: 13px; color: #787774; margin-top: 5px;">破線無條件出場<br>紀律第一</div>
+                    <div style="font-size: 13px; color: #787774; margin-top: 5px;">不預設立場<br>破線嚴格停損</div>
                 </div>
             </div>
 
             <!-- 右側內容區 -->
             <div class="content">
                 
-                <!-- 視圖 1：投資標的 -->
+                <!-- 1. 投資標的與績效 -->
                 <div id="view-table" class="view-section active">
                     <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">🎯 投資標的&績效</div>
                     <div class="table-container">
@@ -115,7 +135,7 @@
                     </div>
                 </div>
 
-                <!-- 視圖 2：交易紀錄 -->
+                <!-- 2. 投資交易紀錄 -->
                 <div id="view-trans" class="view-section">
                     <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">☑️ 投資交易紀錄</div>
                     <div class="table-container">
@@ -124,12 +144,13 @@
                                 <tr>
                                     <th style="width: 110px;">📅 交易日期</th>
                                     <th>↗ 標的</th>
-                                    <th>◎ 部位</th>
-                                    <th># 口數</th>
-                                    <th>進場價</th>
-                                    <th>出場價</th>
-                                    <th>∑ 收益金額</th>
-                                    <th>☑ 交易檢討</th>
+                                    <th>◎ 交易類型</th>
+                                    <th>◎ 買出/買入</th>
+                                    <th>💸 股價</th>
+                                    <th>📦 股數</th>
+                                    <th>∑ 交易金額</th>
+                                    <th style="width: 70px;">☑ 覆盤</th>
+                                    <th>Aa 備註</th>
                                     <th style="width: 40px;">刪除</th>
                                 </tr>
                             </thead>
@@ -139,11 +160,57 @@
                     </div>
                 </div>
 
-                <!-- 視圖 3：PDCA 交易日誌與覆盤主清單 -->
+                <!-- 3. 投資分析與筆記 (報告區) -->
+                <div id="view-notes" class="view-section">
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 15px;">🔖 投資分析&筆記 (報告與研報彙整)</div>
+                    <div class="note-form">
+                        <div class="form-row">
+                            <div class="form-col" style="flex: 2;">
+                                <label>Aa 報告標題</label>
+                                <input type="text" id="note-title" placeholder="例如：財報狗 - 輝達最新財報與 AI 產業研報">
+                            </div>
+                            <div class="form-col">
+                                <label>◎ 類別</label>
+                                <select id="note-type">
+                                    <option value="產業研報">產業研報</option>
+                                    <option value="分析財報">分析財報</option>
+                                    <option value="交易覆盤">交易覆盤</option>
+                                    <option value="總經動向">總經動向</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label>↗ 關聯標的</label>
+                                <input type="text" id="note-target" placeholder="例如：NVDA / 銅">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>🔍 核心關鍵摘要 (商業邏輯與數據)</label>
+                                <textarea id="note-summary" placeholder="記錄現況、數據與影響..."></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>⚠️ 投資風險與反向查證 (不預設立場)</label>
+                                <textarea id="note-risk" placeholder="記錄地緣政治、產能過剩或估值過高風險..."></textarea>
+                            </div>
+                            <div class="form-col">
+                                <label>🎯 投資行動啟發</label>
+                                <textarea id="note-action" placeholder="記錄具體建議與下一步應對策略..."></textarea>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn-submit" onclick="saveNewNote()">儲存分析筆記</button>
+                        </div>
+                    </div>
+                    <div id="notes-list"></div>
+                </div>
+
+                <!-- 4. PDCA 覆盤清單 -->
                 <div id="view-pdca" class="view-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div style="font-size: 22px; font-weight: 600;">📝 交易日誌與 PDCA 覆盤清單</div>
-                        <button class="btn-submit" onclick="addNewPdca()" style="background:#37352f; color:#fff; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">+ 新增一張日誌</button>
+                        <div style="font-size: 22px; font-weight: 600;">📝 PDCA 交易日誌覆盤</div>
+                        <button class="btn-submit" onclick="addNewPdca()">+ 新增一張日誌</button>
                     </div>
                     <div class="table-container">
                         <table>
@@ -159,45 +226,40 @@
                     </div>
                 </div>
 
-                <!-- 視圖 4：單張 PDCA 覆盤編輯內頁 (對應圖片一) -->
+                <!-- 5. PDCA 覆盤內頁 -->
                 <div id="view-pdca-detail" class="view-section">
                     <button class="back-btn" onclick="switchView('pdca')">⬅ 返回日誌列表</button>
-                    
                     <div class="pdca-header">
                         <span style="font-size: 28px;">✍️</span>
-                        <input type="text" id="detail-title" class="pdca-title-input" placeholder="例如：交易日誌_2026/04/07-1" oninput="saveCurrentPdcaField()">
+                        <input type="text" id="detail-title" class="pdca-title-input" placeholder="例如：交易日誌_2025/O/O-1" oninput="saveCurrentPdcaField()">
                     </div>
-
-                    <!-- PLAN & DO / CHECK 區塊 -->
                     <div class="pdca-grid-2">
                         <div class="pdca-box">
                             <h3>PLAN 做單規劃</h3>
-                            <label style="font-size: 12px; color: #787774; display:block; margin: 8px 0 4px;">進場前規劃與多空交叉查證：</label>
-                            <textarea id="detail-plan" placeholder="寫下進場邏輯、多空理由、預計停損點..." oninput="saveCurrentPdcaField()"></textarea>
+                            <label style="font-size: 12px; color: #787774; display:block; margin: 8px 0 4px;">進場前規劃：</label>
+                            <textarea id="detail-plan" placeholder="進場前規劃..." oninput="saveCurrentPdcaField()"></textarea>
                         </div>
                         <div class="pdca-box">
                             <h3>DO 執行 & CHECK 核檢</h3>
-                            <label style="font-size: 12px; color: #787774; display:block; margin: 8px 0 4px;">執行狀態 & 心態紀錄：</label>
-                            <textarea id="detail-do" placeholder="實際進場狀況、心態是否焦慮、紀律落實度..." oninput="saveCurrentPdcaField()"></textarea>
-                            <label style="font-size: 12px; color: #787774; display:block; margin: 12px 0 4px;">交易檢討與獲利/虧損覆盤：</label>
-                            <textarea id="detail-check" placeholder="檢討出場點位是否合理、滑價或抱單情形..." oninput="saveCurrentPdcaField()"></textarea>
+                            <label style="font-size: 12px; color: #787774; display:block; margin: 8px 0 4px;">執行狀態 & 心態：</label>
+                            <textarea id="detail-do" placeholder="執行狀態&心態..." oninput="saveCurrentPdcaField()"></textarea>
+                            <label style="font-size: 12px; color: #787774; display:block; margin: 12px 0 4px;">交易檢討：</label>
+                            <textarea id="detail-check" placeholder="交易檢討..." oninput="saveCurrentPdcaField()"></textarea>
                         </div>
                     </div>
-
-                    <!-- 盤勢回顧與 ACT 行動改善區塊 -->
                     <div class="pdca-grid-bottom">
                         <div class="pdca-box" style="background: #fffdf5;">
-                            <h3 style="background: #fdf6cc; border-left-color: #dfab01;">盤勢回顧 (市場結構與大宗商品聯動)</h3>
-                            <textarea id="detail-market" placeholder="記錄當下美元、大宗商品或台股盤勢結構..." oninput="saveCurrentPdcaField()" style="min-height: 120px;"></textarea>
+                            <h3 style="background: #fdf6cc; border-left-color: #dfab01;">盤勢回顧</h3>
+                            <textarea id="detail-market" placeholder="盤勢回顧..." oninput="saveCurrentPdcaField()" style="min-height: 120px;"></textarea>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 15px;">
                             <div class="act-box">
                                 <h3>ACT 行動改善</h3>
-                                <textarea id="detail-act" placeholder="1. 記取教訓事項&#10;2. 下次改進對策" oninput="saveCurrentPdcaField()" style="min-height: 50px;"></textarea>
+                                <textarea id="detail-act" placeholder="1.&#10;2." oninput="saveCurrentPdcaField()" style="min-height: 50px;"></textarea>
                             </div>
                             <div class="reminder-box">
                                 <h3>💡 貼心提醒 reminder</h3>
-                                <textarea id="detail-reminder" placeholder="1. 嚴格停損&#10;2. 不預設立場" oninput="saveCurrentPdcaField()" style="min-height: 50px;"></textarea>
+                                <textarea id="detail-reminder" placeholder="1.&#10;2." oninput="saveCurrentPdcaField()" style="min-height: 50px;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -208,27 +270,22 @@
     </div>
 
     <script>
-        // --- 資料初始化 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets')) || [];
-        let transactions = JSON.parse(localStorage.getItem('trading_trans')) || [
-            { date: '2026-07-31', target: '台指期', position: '多', qty: 1, entry: 13543, exit: 13553, profit: 500, reviewId: '1' }
-        ];
-        
-        let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca')) || [
-            { id: '1', title: '交易日誌_2026/04/07-1', date: '2026-04-07', plan: '銅需求上升，試單短波段', doText: '紀律執行，分批建倉', checkText: '停損點未被觸發，續抱', market: '銅價高檔震盪，美元走軟', act: '1. 保持耐心不追高', reminder: '1. 破線必須走' }
-        ];
-
+        let transactions = JSON.parse(localStorage.getItem('trading_trans')) || [];
+        let notes = JSON.parse(localStorage.getItem('trading_notes')) || [];
+        let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca')) || [];
         let currentEditingId = null;
 
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if(viewName === 'notes') renderNotes();
             if(viewName === 'pdca') renderPdcaList();
         }
 
-        // ==========================================
-        // 標的與交易紀錄邏輯
-        // ==========================================
+        // 標的邏輯
         function renderTargets() {
             const tbody = document.getElementById('target-body');
             tbody.innerHTML = '';
@@ -254,33 +311,85 @@
         function deleteTarget(index) { if(confirm('確定刪除？')) { targets.splice(index, 1); saveTargets(); renderTargets(); } }
         function saveTargets() { localStorage.setItem('trading_targets', JSON.stringify(targets)); }
 
+        // 交易紀錄邏輯
         function renderTrans() {
             const tbody = document.getElementById('trans-body');
             tbody.innerHTML = '';
             transactions.forEach((item, index) => {
-                let pnlClass = item.profit > 0 ? 'profit' : (item.profit < 0 ? 'loss' : '');
+                let rawTotal = item.price * item.qty;
+                let displayTotal = item.action === '買入' ? -Math.abs(rawTotal) : Math.abs(rawTotal);
                 tbody.innerHTML += `
                     <tr>
                         <td><input type="date" value="${item.date}" onchange="updateTrans(${index}, 'date', this.value)"></td>
                         <td><input type="text" value="${item.target}" onchange="updateTrans(${index}, 'target', this.value)"></td>
-                        <td><select onchange="updateTrans(${index}, 'position', this.value)"><option value="多" ${item.position==='多'?'selected':''}>多</option><option value="空" ${item.position==='空'?'selected':''}>空</option></select></td>
+                        <td><select onchange="updateTrans(${index}, 'type', this.value)"><option value="單筆申購" ${item.type==='單筆申購'?'selected':''}>單筆申購</option><option value="定期定額" ${item.type==='定期定額'?'selected':''}>定期定額</option></select></td>
+                        <td><select class="tag ${item.action === '買入' ? 'tag-green' : 'tag-orange'}" style="appearance:none; text-align:center; cursor:pointer;" onchange="updateTrans(${index}, 'action', this.value)"><option value="買入" ${item.action==='買入'?'selected':''}>買入</option><option value="賣出" ${item.action==='賣出'?'selected':''}>賣出</option></select></td>
+                        <td><input type="number" value="${item.price}" onchange="updateTrans(${index}, 'price', this.value)"></td>
                         <td><input type="number" value="${item.qty}" onchange="updateTrans(${index}, 'qty', this.value)"></td>
-                        <td><input type="number" value="${item.entry}" onchange="updateTrans(${index}, 'entry', this.value)"></td>
-                        <td><input type="number" value="${item.exit}" onchange="updateTrans(${index}, 'exit', this.value)"></td>
-                        <td class="${pnlClass}" style="font-weight: 600;">${item.profit}</td>
-                        <td><button class="back-btn" onclick="openPdcaDetail('${item.reviewId || pdcaLogs[0].id}')">📝 檢討</button></td>
-                        <td><button class="btn-delete" onclick="deleteTrans(${index})">🗑️</button></td>
+                        <td style="font-weight: 500;">$${displayTotal.toLocaleString()}</td>
+                        <td style="text-align: center;"><input type="checkbox" ${item.reviewed ? 'checked' : ''} onchange="updateTrans(${index}, 'reviewed', this.checked)"></td>
+                        <td><input type="text" value="${item.note}" onchange="updateTrans(${index}, 'note', this.value)"></td>
+                        <td style="text-align: center;"><button class="btn-delete" onclick="deleteTrans(${index})">🗑️</button></td>
                     </tr>`;
             });
         }
-        function addTransRow() { transactions.push({ date: new Date().toISOString().split('T')[0], target: '', position: '多', qty: 1, entry: 0, exit: 0, profit: 0, reviewId: pdcaLogs[0]?.id || '' }); saveTrans(); renderTrans(); }
-        function updateTrans(index, field, value) { transactions[index][field] = value; saveTrans(); renderTrans(); }
-        function deleteTrans(index) { transactions.splice(index, 1); saveTrans(); renderTrans(); }
+        function addTransRow() { transactions.push({ date: new Date().toISOString().split('T')[0], target: '', type: '單筆申購', action: '買入', price: 0, qty: 0, reviewed: false, note: '' }); saveTrans(); renderTrans(); }
+        function updateTrans(index, field, value) { if(['price', 'qty'].includes(field)) transactions[index][field] = parseFloat(value) || 0; else transactions[index][field] = value; saveTrans(); renderTrans(); }
+        function deleteTrans(index) { if(confirm('確定刪除？')) { transactions.splice(index, 1); saveTrans(); renderTrans(); } }
         function saveTrans() { localStorage.setItem('trading_trans', JSON.stringify(transactions)); }
 
-        // ==========================================
-        // PDCA 覆盤日誌邏輯
-        // ==========================================
+        // 報告與筆記邏輯
+        function renderNotes() {
+            const list = document.getElementById('notes-list');
+            list.innerHTML = '';
+            [...notes].reverse().forEach(note => {
+                list.innerHTML += `
+                    <div class="note-card">
+                        <div class="note-header">
+                            <h3 class="note-title">📑 ${note.title}</h3>
+                            <div class="note-meta">
+                                <span class="tag tag-blue">${note.type}</span>
+                                <span class="tag tag-gray">🎯 ${note.target}</span>
+                                <span>🗓️ ${note.date}</span>
+                            </div>
+                            <button class="btn-del-note" onclick="deleteNote(${note.id})" title="刪除">✖</button>
+                        </div>
+                        <div class="note-body">
+                            <div>
+                                <div class="note-section"><h5>🔍 核心關鍵摘要</h5><p>${note.summary}</p></div>
+                                <div class="note-section"><h5 style="color: #c62828;">⚠️ 投資風險與反向查證</h5><p>${note.risk}</p></div>
+                            </div>
+                            <div style="background: #fdfdfc; padding: 15px; border-radius: 6px; border: 1px solid #f1f1f0;">
+                                <div class="note-section" style="margin-bottom: 0;"><h5 style="color: #1e6235;">🎯 投資行動啟發</h5><p>${note.action}</p></div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+        function saveNewNote() {
+            const title = document.getElementById('note-title').value;
+            if(!title) { alert('請輸入標題！'); return; }
+            notes.push({
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                title: title,
+                type: document.getElementById('note-type').value,
+                target: document.getElementById('note-target').value,
+                summary: document.getElementById('note-summary').value,
+                risk: document.getElementById('note-risk').value,
+                action: document.getElementById('note-action').value
+            });
+            localStorage.setItem('trading_notes', JSON.stringify(notes));
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-target').value = '';
+            document.getElementById('note-summary').value = '';
+            document.getElementById('note-risk').value = '';
+            document.getElementById('note-action').value = '';
+            renderNotes();
+        }
+        function deleteNote(id) { if(confirm('確定刪除？')) { notes = notes.filter(n => n.id !== id); localStorage.setItem('trading_notes', JSON.stringify(notes)); renderNotes(); } }
+
+        // PDCA 覆盤邏輯
         function renderPdcaList() {
             const tbody = document.getElementById('pdca-list-body');
             tbody.innerHTML = '';
@@ -293,25 +402,16 @@
                     </tr>`;
             });
         }
-
         function addNewPdca() {
             const newId = Date.now().toString();
-            const newLog = {
-                id: newId,
-                title: '交易日誌_' + new Date().toISOString().split('T')[0] + '-1',
-                date: new Date().toISOString().split('T')[0],
-                plan: '', doText: '', checkText: '', market: '', act: '', reminder: ''
-            };
-            pdcaLogs.push(newLog);
+            pdcaLogs.push({ id: newId, title: '交易日誌_' + new Date().toISOString().split('T')[0] + '-1', date: new Date().toISOString().split('T')[0], plan: '', doText: '', checkText: '', market: '', act: '', reminder: '' });
             localStorage.setItem('trading_pdca', JSON.stringify(pdcaLogs));
             openPdcaDetail(newId);
         }
-
         function openPdcaDetail(id) {
             currentEditingId = id;
             const log = pdcaLogs.find(l => l.id === id);
             if(!log) return;
-
             document.getElementById('detail-title').value = log.title;
             document.getElementById('detail-plan').value = log.plan;
             document.getElementById('detail-do').value = log.doText;
@@ -319,11 +419,9 @@
             document.getElementById('detail-market').value = log.market;
             document.getElementById('detail-act').value = log.act;
             document.getElementById('detail-reminder').value = log.reminder;
-
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-pdca-detail').classList.add('active');
         }
-
         function saveCurrentPdcaField() {
             if(!currentEditingId) return;
             const log = pdcaLogs.find(l => l.id === currentEditingId);
@@ -338,16 +436,9 @@
                 localStorage.setItem('trading_pdca', JSON.stringify(pdcaLogs));
             }
         }
+        function deletePdca(id) { if(confirm('確定刪除？')) { pdcaLogs = pdcaLogs.filter(l => l.id !== id); localStorage.setItem('trading_pdca', JSON.stringify(pdcaLogs)); renderPdcaList(); } }
 
-        function deletePdca(id) {
-            if(confirm('確定刪除這張日誌？')) {
-                pdcaLogs = pdcaLogs.filter(l => l.id !== id);
-                localStorage.setItem('trading_pdca', JSON.stringify(pdcaLogs));
-                renderPdcaList();
-            }
-        }
-
-        window.onload = () => { renderTargets(); renderTrans(); renderPdcaList(); };
+        window.onload = () => { renderTargets(); renderTrans(); renderNotes(); renderPdcaList(); };
     </script>
 </body>
 </html>
