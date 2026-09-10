@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>投資日誌筆記</title>
     <style>
+        /* 基礎樣式 */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #ffffff; color: #37352f; margin: 0; padding: 0; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 50px 20px; }
+        .container { max-width: 1250px; margin: 0 auto; padding: 0 20px 50px 20px; }
         .cover-image { width: 100%; height: 220px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); background-image: url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; border-radius: 0 0 12px 12px; }
         .header-title { font-size: 36px; font-weight: 700; margin: 30px 0 10px 0; border-bottom: 1px solid #ededed; padding-bottom: 15px; }
         .header-desc { font-size: 14px; color: #787774; margin-bottom: 30px; line-height: 1.6; }
         
+        /* 佈局 */
         .main-layout { display: flex; gap: 30px; align-items: flex-start; }
         .sidebar { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
         .sidebar-box { padding: 15px; border-radius: 8px; font-size: 14px; }
@@ -19,26 +21,32 @@
         .sidebar-box h4 { margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-size: 15px; }
         .sidebar-item { padding: 8px 5px; color: #37352f; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s; }
         .sidebar-item:hover, .sidebar-item.active { background-color: rgba(0,0,0,0.08); }
-
         .content { flex: 1; min-width: 0; }
         .view-section { display: none; }
         .view-section.active { display: block; }
         
-        /* 表格視圖設計 (還原 Notion Table) */
+        /* 表格共用設計 */
         .table-container { overflow-x: auto; margin-top: 10px; border: 1px solid #ededed; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid #ededed; border-right: 1px solid #ededed; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid #ededed; border-right: 1px solid #ededed; white-space: nowrap; }
         th { color: #787774; font-weight: normal; background: #fdfdfc; }
         td:last-child, th:last-child { border-right: none; }
         
-        /* 隱藏原生輸入框樣式，實現點擊編輯 */
-        td input, td select { border: none; background: transparent; width: 100%; font-size: 14px; outline: none; font-family: inherit; color: inherit; box-sizing: border-box; padding: 4px; border-radius: 4px; }
+        td input[type="text"], td input[type="number"], td input[type="date"], td select { border: none; background: transparent; width: 100%; font-size: 13px; outline: none; font-family: inherit; color: inherit; box-sizing: border-box; padding: 4px; border-radius: 4px; }
         td input:hover, td select:hover, td input:focus, td select:focus { background: #f1f1f0; }
         
         .btn-add { background: none; border: none; color: #787774; cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 5px; font-size: 14px; width: 100%; text-align: left; }
         .btn-add:hover { background-color: #f1f1f0; color: #37352f; }
-        .profit { color: #d94228; } /* 獲利紅 */
-        .loss { color: #438767; } /* 虧損綠 (台股習慣) */
+        .btn-delete { color: #999; background: none; border: none; cursor: pointer; border-radius: 4px; padding: 4px 8px; }
+        .btn-delete:hover { background: #ffebee; color: #c62828; }
+        
+        /* 標籤設計 */
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; display: inline-block; }
+        .tag-pink { background: #fce8e8; color: #9a3131; }
+        .tag-green { background: #e6f4ea; color: #1e6235; }
+        .tag-orange { background: #faebd7; color: #9c5b14; }
+        .profit { color: #d94228; }
+        .loss { color: #438767; }
     </style>
 </head>
 <body>
@@ -51,12 +59,12 @@
         </div>
 
         <div class="main-layout">
-            <!-- 左側邊欄選單 -->
+            <!-- 左側邊欄 -->
             <div class="sidebar">
                 <div class="sidebar-box box-yellow">
                     <h4>📁 資料庫</h4>
                     <div class="sidebar-item active" onclick="switchView('table')">🎯 投資標的&績效</div>
-                    <div class="sidebar-item" onclick="switchView('gallery')">☑️ 投資交易紀錄</div>
+                    <div class="sidebar-item" onclick="switchView('trans')">☑️ 投資交易紀錄</div>
                 </div>
                 <div class="sidebar-box box-gray">
                     <h4>📝 MEMO</h4>
@@ -66,15 +74,11 @@
 
             <!-- 右側內容區 -->
             <div class="content">
+                
                 <!-- 視圖 1：投資標的表格 -->
                 <div id="view-table" class="view-section active">
-                    <div style="display: flex; gap: 15px; margin-bottom: 15px; color: #787774; font-size: 14px; border-bottom: 1px solid #ededed; padding-bottom: 10px;">
-                        <span style="color: #37352f; font-weight: 600;">▤ 表格視圖</span>
-                    </div>
-                    <div style="font-size: 12px; color: #787774; margin-bottom: 10px;">
-                        📍 點擊表格內任意欄位即可直接修改文字與數字。系統會自動計算總損益。
-                    </div>
-                    
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">🎯 投資標的&績效</div>
+                    <div style="font-size: 12px; color: #787774; margin-bottom: 15px;">📍 標記有 ∑ 的欄位為自動計算項目。點擊格子可直接修改。</div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -83,124 +87,193 @@
                                     <th>Aa 標的名稱</th>
                                     <th>◎ 策略</th>
                                     <th>∑ 階段</th>
-                                    <th>持有股數/口數</th>
+                                    <th>持有股/口數</th>
                                     <th>投入均價</th>
                                     <th>最新報價</th>
                                     <th>∑ 預估損益</th>
+                                    <th style="width: 40px;"></th>
                                 </tr>
                             </thead>
-                            <tbody id="table-body">
-                                <!-- JS 動態渲染資料 -->
-                            </tbody>
+                            <tbody id="target-body"></tbody>
                         </table>
-                        <button class="btn-add" onclick="addRow()">+ 新增一筆資料</button>
+                        <button class="btn-add" onclick="addTargetRow()">+ 新增一筆標的</button>
                     </div>
                 </div>
 
-                <!-- 視圖 2：開發中佔位符 (原本的畫廊) -->
-                <div id="view-gallery" class="view-section">
-                    <div style="padding: 40px; text-align: center; color: #787774; border: 1px dashed #ccc; border-radius: 8px;">
-                        <h3>🚧 這裡可以整合先前的多空查證表單</h3>
-                        <p>點擊左側「投資標的&績效」回到表格視圖</p>
+                <!-- 視圖 2：投資交易紀錄 -->
+                <div id="view-trans" class="view-section">
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">☑️ 投資交易紀錄</div>
+                    <div style="font-size: 12px; color: #787774; margin-bottom: 15px; line-height: 1.6;">
+                        📍 針對單筆買賣：系統公式會自動將買入計算為負值（現金流出），賣出計算為正值。<br>
+                        📍 點擊最右側的「🗑️」即可刪除該筆錯誤紀錄。
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 110px;">📅 交易日期</th>
+                                    <th>↗ 標的</th>
+                                    <th>◎ 交易類型</th>
+                                    <th>◎ 買出/買入</th>
+                                    <th>💸 股價</th>
+                                    <th>📦 股數</th>
+                                    <th>∑ 交易金額</th>
+                                    <th style="width: 70px;">☑ 決策覆盤</th>
+                                    <th>Aa 備註</th>
+                                    <th style="width: 40px;">刪除</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trans-body"></tbody>
+                        </table>
+                        <button class="btn-add" onclick="addTransRow()">+ 新增一筆交易</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        // 初始化讀取 LocalStorage，如果沒有資料則帶入你關注的商品作為預設範例
+        // --- 資料初始化 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets')) || [
-            { market: '大宗', name: '倫敦銅', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 4.5 },
-            { market: '台股', name: 'PCB族群', strategy: '事件驅動', stage: '已佈局', qty: 2, cost: 120, price: 125 },
-            { market: '大宗', name: '黃金', strategy: '抄底', stage: '等待中', qty: 0, cost: 0, price: 4100 }
+            { market: '大宗', name: '倫敦銅', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 4.5 }
+        ];
+        
+        let transactions = JSON.parse(localStorage.getItem('trading_trans')) || [
+            { date: '2026-09-10', target: '長榮', type: '單筆申購', action: '買入', price: 99.00, qty: 20, reviewed: false, note: '測試交易' }
         ];
 
-        // 切換視圖功能
+        // --- 視圖切換 ---
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
             
-            // 處理側邊欄 highlight
             document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
         }
 
-        // 渲染表格資料
-        function renderTable() {
-            const tbody = document.getElementById('table-body');
+        // ==========================================
+        // 視圖 1：標的與績效邏輯
+        // ==========================================
+        function renderTargets() {
+            const tbody = document.getElementById('target-body');
             tbody.innerHTML = '';
-            
             targets.forEach((item, index) => {
-                // 計算損益 (報價 - 均價) * 數量
                 const pnl = ((item.price - item.cost) * item.qty).toFixed(2);
-                let pnlClass = '';
-                if(pnl > 0) pnlClass = 'profit'; // 賺錢紅色
-                else if (pnl < 0) pnlClass = 'loss'; // 賠錢綠色
-                
+                let pnlClass = item.qty > 0 ? (pnl > 0 ? 'profit' : (pnl < 0 ? 'loss' : '')) : '';
                 const displayPnl = item.qty > 0 ? pnl : '-';
 
                 tbody.innerHTML += `
                     <tr>
                         <td>
-                            <select onchange="updateData(${index}, 'market', this.value)">
+                            <select onchange="updateTarget(${index}, 'market', this.value)">
                                 <option value="台股" ${item.market==='台股'?'selected':''}>台股</option>
-                                <option value="美股" ${item.market==='美股'?'selected':''}>美股</option>
                                 <option value="大宗" ${item.market==='大宗'?'selected':''}>大宗</option>
                             </select>
                         </td>
-                        <td><input type="text" value="${item.name}" onchange="updateData(${index}, 'name', this.value)" placeholder="輸入名稱"></td>
+                        <td><input type="text" value="${item.name}" onchange="updateTarget(${index}, 'name', this.value)"></td>
                         <td>
-                            <select onchange="updateData(${index}, 'strategy', this.value)">
+                            <select onchange="updateTarget(${index}, 'strategy', this.value)">
                                 <option value="短波段" ${item.strategy==='短波段'?'selected':''}>短波段</option>
                                 <option value="價值型" ${item.strategy==='價值型'?'selected':''}>價值型</option>
-                                <option value="事件驅動" ${item.strategy==='事件驅動'?'selected':''}>事件驅動</option>
-                                <option value="抄底" ${item.strategy==='抄底'?'selected':''}>抄底</option>
                             </select>
                         </td>
                         <td>
-                            <select onchange="updateData(${index}, 'stage', this.value)">
+                            <select onchange="updateTarget(${index}, 'stage', this.value)">
                                 <option value="觀察中" ${item.stage==='觀察中'?'selected':''}>🔍 觀察中</option>
-                                <option value="等待中" ${item.stage==='等待中'?'selected':''}>⏳ 等待中</option>
                                 <option value="已佈局" ${item.stage==='已佈局'?'selected':''}>📈 已佈局</option>
-                                <option value="已清倉" ${item.stage==='已清倉'?'selected':''}>🏁 已清倉</option>
                             </select>
                         </td>
-                        <td><input type="number" value="${item.qty}" onchange="updateData(${index}, 'qty', this.value)"></td>
-                        <td><input type="number" value="${item.cost}" onchange="updateData(${index}, 'cost', this.value)"></td>
-                        <td><input type="number" value="${item.price}" onchange="updateData(${index}, 'price', this.value)"></td>
+                        <td><input type="number" value="${item.qty}" onchange="updateTarget(${index}, 'qty', this.value)"></td>
+                        <td><input type="number" value="${item.cost}" onchange="updateTarget(${index}, 'cost', this.value)"></td>
+                        <td><input type="number" value="${item.price}" onchange="updateTarget(${index}, 'price', this.value)"></td>
                         <td class="${pnlClass}" style="font-weight: 600;">${displayPnl}</td>
+                        <td><button class="btn-delete" onclick="deleteTarget(${index})">🗑️</button></td>
                     </tr>
                 `;
             });
         }
 
-        // 新增一筆空白資料
-        function addRow() {
+        function addTargetRow() {
             targets.push({ market: '台股', name: '', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 0 });
-            saveData();
-            renderTable();
+            saveTargets(); renderTargets();
         }
 
-        // 更新特定欄位資料
-        function updateData(index, field, value) {
-            // 如果是數字欄位，轉為浮點數
-            if(['qty', 'cost', 'price'].includes(field)) {
-                targets[index][field] = parseFloat(value) || 0;
-            } else {
-                targets[index][field] = value;
+        function updateTarget(index, field, value) {
+            if(['qty', 'cost', 'price'].includes(field)) targets[index][field] = parseFloat(value) || 0;
+            else targets[index][field] = value;
+            saveTargets(); renderTargets();
+        }
+
+        function deleteTarget(index) {
+            if(confirm('確定刪除此標的？')) { targets.splice(index, 1); saveTargets(); renderTargets(); }
+        }
+        function saveTargets() { localStorage.setItem('trading_targets', JSON.stringify(targets)); }
+
+
+        // ==========================================
+        // 視圖 2：投資交易紀錄邏輯
+        // ==========================================
+        function renderTrans() {
+            const tbody = document.getElementById('trans-body');
+            tbody.innerHTML = '';
+            transactions.forEach((item, index) => {
+                // 計算總金額：買入流出為負，賣出流入為正
+                let rawTotal = item.price * item.qty;
+                let displayTotal = item.action === '買入' ? -Math.abs(rawTotal) : Math.abs(rawTotal);
+                
+                // 動態標籤樣式
+                let actionTag = item.action === '買入' ? 'tag-green' : 'tag-orange';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><input type="date" value="${item.date}" onchange="updateTrans(${index}, 'date', this.value)"></td>
+                        <td><input type="text" value="${item.target}" onchange="updateTrans(${index}, 'target', this.value)" placeholder="例：鴻海"></td>
+                        <td>
+                            <select onchange="updateTrans(${index}, 'type', this.value)">
+                                <option value="單筆申購" ${item.type==='單筆申購'?'selected':''}>單筆申購</option>
+                                <option value="定期定額" ${item.type==='定期定額'?'selected':''}>定期定額</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="tag ${actionTag}" style="appearance: none; text-align: center; font-weight: bold; cursor: pointer;" onchange="updateTrans(${index}, 'action', this.value)">
+                                <option value="買入" ${item.action==='買入'?'selected':''}>買入</option>
+                                <option value="賣出" ${item.action==='賣出'?'selected':''}>賣出</option>
+                            </select>
+                        </td>
+                        <td><input type="number" value="${item.price}" onchange="updateTrans(${index}, 'price', this.value)"></td>
+                        <td><input type="number" value="${item.qty}" onchange="updateTrans(${index}, 'qty', this.value)"></td>
+                        <td style="font-weight: 500;">$${displayTotal.toLocaleString()}</td>
+                        <td style="text-align: center;"><input type="checkbox" ${item.reviewed ? 'checked' : ''} onchange="updateTrans(${index}, 'reviewed', this.checked)"></td>
+                        <td><input type="text" value="${item.note}" onchange="updateTrans(${index}, 'note', this.value)" placeholder="輸入備註"></td>
+                        <td style="text-align: center;"><button class="btn-delete" onclick="deleteTrans(${index})">🗑️</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function addTransRow() {
+            const today = new Date().toISOString().split('T')[0];
+            transactions.push({ date: today, target: '', type: '單筆申購', action: '買入', price: 0, qty: 0, reviewed: false, note: '' });
+            saveTrans(); renderTrans();
+        }
+
+        function updateTrans(index, field, value) {
+            if(['price', 'qty'].includes(field)) transactions[index][field] = parseFloat(value) || 0;
+            else transactions[index][field] = value;
+            saveTrans(); renderTrans();
+        }
+
+        function deleteTrans(index) {
+            if(confirm('確定刪除這筆交易紀錄嗎？')) {
+                transactions.splice(index, 1);
+                saveTrans(); renderTrans();
             }
-            saveData();
-            renderTable(); // 重新渲染以更新損益計算
         }
+        function saveTrans() { localStorage.setItem('trading_trans', JSON.stringify(transactions)); }
 
-        // 儲存至瀏覽器
-        function saveData() {
-            localStorage.setItem('trading_targets', JSON.stringify(targets));
-        }
-
-        // 網頁載入時啟動
-        window.onload = renderTable;
+        // 啟動渲染
+        window.onload = () => { renderTargets(); renderTrans(); };
     </script>
 </body>
 </html>
