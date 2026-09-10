@@ -1,1 +1,96 @@
 
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短波段交易日誌</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { background: #2b5876; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
+        button:hover { background: #1e3f56; }
+        .card { background: #fdfdfd; border-left: 5px solid #2b5876; padding: 15px; margin-top: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .risk-text { color: #d32f2f; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚖️ 交易客觀查證台</h1>
+        
+        <div class="form-group">
+            <label>標的 (例如：白銀、銅、PCB)</label>
+            <input type="text" id="asset" placeholder="輸入標的...">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex:1;">
+                <label>進場價</label>
+                <input type="number" id="entry" placeholder="0.0">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>破線停損價</label>
+                <input type="number" id="stop" placeholder="0.0">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>🟢 看多理由 (事件面/需求支撐)</label>
+            <textarea id="long_reason" rows="2" placeholder="例：台股PCB需求帶動銅用量..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>🔴 看空風險 (強迫查證反面觀點)</label>
+            <textarea id="short_reason" rows="2" placeholder="例：精煉銅產能過剩、美元走強..."></textarea>
+        </div>
+        
+        <button onclick="saveTrade()">新增客觀查證紀錄</button>
+
+        <h2 style="margin-top: 40px;">📂 歷史查證紀錄</h2>
+        <div id="logArea"></div>
+    </div>
+
+    <script>
+        // 讀取瀏覽器記憶體
+        let trades = JSON.parse(localStorage.getItem('trading_logs')) || [];
+
+        function renderLogs() {
+            const area = document.getElementById('logArea');
+            area.innerHTML = '';
+            trades.reverse().forEach(t => {
+                area.innerHTML += `
+                    <div class="card">
+                        <h3>${t.asset} <span style="font-size:14px; color:#666;">(${t.date})</span></h3>
+                        <p>進場: ${t.entry} | <span class="risk-text">停損: ${t.stop}</span></p>
+                        <p><strong>看多:</strong> ${t.long_reason}</p>
+                        <p><strong>看空:</strong> ${t.short_reason}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function saveTrade() {
+            const asset = document.getElementById('asset').value;
+            if(!asset) return alert("請填寫標的！");
+            
+            const newTrade = {
+                date: new Date().toLocaleDateString(),
+                asset: asset,
+                entry: document.getElementById('entry').value,
+                stop: document.getElementById('stop').value,
+                long_reason: document.getElementById('long_reason').value,
+                short_reason: document.getElementById('short_reason').value
+            };
+            
+            trades.push(newTrade);
+            localStorage.setItem('trading_logs', JSON.stringify(trades));
+            renderLogs();
+            
+            document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+        }
+
+        window.onload = renderLogs;
+    </script>
+</body>
+</html>
