@@ -41,12 +41,35 @@
         .btn-delete:hover { background: #ffebee; color: #c62828; }
         
         /* 標籤設計 */
-        .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; display: inline-block; }
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
         .tag-pink { background: #fce8e8; color: #9a3131; }
         .tag-green { background: #e6f4ea; color: #1e6235; }
         .tag-orange { background: #faebd7; color: #9c5b14; }
+        .tag-gray { background: #e3e2e0; color: #32302c; }
+        .tag-blue { background: #d3e5ef; color: #183347; }
         .profit { color: #d94228; }
         .loss { color: #438767; }
+
+        /* 筆記區塊專用設計 */
+        .note-form { background: #fdfdfc; border: 1px solid #ededed; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-col { flex: 1; }
+        .note-form label { display: block; font-size: 12px; font-weight: 600; color: #787774; margin-bottom: 6px; }
+        .note-form input, .note-form select, .note-form textarea { width: 100%; padding: 8px 10px; border: 1px solid #e1e1e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
+        .note-form textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+        .btn-submit { background: #37352f; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-submit:hover { background: #2f2d27; }
+
+        .note-card { border: 1px solid #ededed; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); background: #fff; }
+        .note-header { margin-bottom: 15px; border-bottom: 1px solid #f1f1f0; padding-bottom: 15px; position: relative;}
+        .note-title { font-size: 20px; font-weight: 700; margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; }
+        .note-meta { display: flex; gap: 10px; font-size: 13px; color: #787774; align-items: center; }
+        .note-body { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .note-section { margin-bottom: 15px; }
+        .note-section h5 { margin: 0 0 8px 0; font-size: 14px; display: flex; align-items: center; gap: 6px; color: #37352f; }
+        .note-section p { margin: 0; font-size: 14px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
+        .btn-del-note { position: absolute; right: 0; top: 0; background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; }
+        .btn-del-note:hover { color: #c62828; }
     </style>
 </head>
 <body>
@@ -65,6 +88,7 @@
                     <h4>📁 資料庫</h4>
                     <div class="sidebar-item active" onclick="switchView('table')">🎯 投資標的&績效</div>
                     <div class="sidebar-item" onclick="switchView('trans')">☑️ 投資交易紀錄</div>
+                    <div class="sidebar-item" onclick="switchView('notes')">🔖 投資分析&筆記</div>
                 </div>
                 <div class="sidebar-box box-gray">
                     <h4>📝 MEMO</h4>
@@ -78,7 +102,6 @@
                 <!-- 視圖 1：投資標的表格 -->
                 <div id="view-table" class="view-section active">
                     <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">🎯 投資標的&績效</div>
-                    <div style="font-size: 12px; color: #787774; margin-bottom: 15px;">📍 標記有 ∑ 的欄位為自動計算項目。點擊格子可直接修改。</div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -103,10 +126,6 @@
                 <!-- 視圖 2：投資交易紀錄 -->
                 <div id="view-trans" class="view-section">
                     <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">☑️ 投資交易紀錄</div>
-                    <div style="font-size: 12px; color: #787774; margin-bottom: 15px; line-height: 1.6;">
-                        📍 針對單筆買賣：系統公式會自動將買入計算為負值（現金流出），賣出計算為正值。<br>
-                        📍 點擊最右側的「🗑️」即可刪除該筆錯誤紀錄。
-                    </div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -118,7 +137,7 @@
                                     <th>💸 股價</th>
                                     <th>📦 股數</th>
                                     <th>∑ 交易金額</th>
-                                    <th style="width: 70px;">☑ 決策覆盤</th>
+                                    <th style="width: 70px;">☑ 覆盤</th>
                                     <th>Aa 備註</th>
                                     <th style="width: 40px;">刪除</th>
                                 </tr>
@@ -129,31 +148,88 @@
                     </div>
                 </div>
 
+                <!-- 視圖 3：投資分析與筆記 -->
+                <div id="view-notes" class="view-section">
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 15px;">🔖 投資分析&筆記</div>
+                    
+                    <!-- 筆記輸入表單 -->
+                    <div class="note-form">
+                        <div class="form-row">
+                            <div class="form-col" style="flex: 2;">
+                                <label>Aa 報告標題</label>
+                                <input type="text" id="note-title" placeholder="例如：PCB 族群大漲與精煉銅連動分析">
+                            </div>
+                            <div class="form-col">
+                                <label>◎ 類別</label>
+                                <select id="note-type">
+                                    <option value="產業研報">產業研報</option>
+                                    <option value="分析財報">分析財報</option>
+                                    <option value="交易覆盤">交易覆盤</option>
+                                    <option value="總經動向">總經動向</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label>↗ 關聯標的</label>
+                                <input type="text" id="note-target" placeholder="例如：銅/PCB">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>🔍 核心關鍵摘要 (商業邏輯與毛利率觀察)</label>
+                                <textarea id="note-summary" placeholder="紀錄報告中的重點數據與推演邏輯..."></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>⚠️ 投資風險與反向查證 (不預設立場)</label>
+                                <textarea id="note-risk" placeholder="尋找潛在風險，例如 EPS 是否為一次性糖衣、是否存在產能過剩疑慮..."></textarea>
+                            </div>
+                            <div class="form-col">
+                                <label>🎯 投資行動啟發 (短波段策略)</label>
+                                <textarea id="note-action" placeholder="具體的應對策略、進場條件與停損設定..."></textarea>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn-submit" onclick="saveNewNote()">儲存分析筆記</button>
+                        </div>
+                    </div>
+
+                    <!-- 筆記列表渲染區 -->
+                    <div id="notes-list"></div>
+                </div>
+
             </div>
         </div>
     </div>
 
     <script>
         // --- 資料初始化 ---
-        let targets = JSON.parse(localStorage.getItem('trading_targets')) || [
-            { market: '大宗', name: '倫敦銅', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 4.5 }
-        ];
+        let targets = JSON.parse(localStorage.getItem('trading_targets')) || [];
+        let transactions = JSON.parse(localStorage.getItem('trading_trans')) || [];
         
-        let transactions = JSON.parse(localStorage.getItem('trading_trans')) || [
-            { date: '2026-09-10', target: '長榮', type: '單筆申購', action: '買入', price: 99.00, qty: 20, reviewed: false, note: '測試交易' }
+        // 預設載入一筆符合你關注領域的交叉查證筆記範例
+        let notes = JSON.parse(localStorage.getItem('trading_notes')) || [
+            {
+                id: Date.now(),
+                date: '2026-04-07',
+                title: '台股 PCB 族群大漲與大宗銅價連動性觀察',
+                type: '產業研報',
+                target: '銅 / PCB板塊',
+                summary: '近期觀察到台股 PCB 族群大漲，底層邏輯推演這代表工業對銅的用量應該會越來越高。若需求面具備實質支撐，銅價有機會走出一波行情。',
+                risk: '需客觀交叉查證：目前市場顯示「精煉銅產能過剩」的問題依然存在。要提防 PCB 廠近期的 EPS 成長是否只是短暫糖衣，若毛利率底層邏輯無法延續，產能過剩將反噬銅價走勢。',
+                action: '身為短波段交易者，不可預設立場急於抄底。先將資金控管好，等待銅價確認消化過剩產能並突破壓力區間後再行試單，並嚴守破線無條件出場的紀律。'
+            }
         ];
 
-        // --- 視圖切換 ---
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
-            
             document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
         }
 
         // ==========================================
-        // 視圖 1：標的與績效邏輯
+        // 視圖 1 & 2：標的與交易紀錄 (保持原有邏輯)
         // ==========================================
         function renderTargets() {
             const tbody = document.getElementById('target-body');
@@ -161,119 +237,136 @@
             targets.forEach((item, index) => {
                 const pnl = ((item.price - item.cost) * item.qty).toFixed(2);
                 let pnlClass = item.qty > 0 ? (pnl > 0 ? 'profit' : (pnl < 0 ? 'loss' : '')) : '';
-                const displayPnl = item.qty > 0 ? pnl : '-';
-
                 tbody.innerHTML += `
                     <tr>
-                        <td>
-                            <select onchange="updateTarget(${index}, 'market', this.value)">
-                                <option value="台股" ${item.market==='台股'?'selected':''}>台股</option>
-                                <option value="大宗" ${item.market==='大宗'?'selected':''}>大宗</option>
-                            </select>
-                        </td>
+                        <td><select onchange="updateTarget(${index}, 'market', this.value)"><option value="台股" ${item.market==='台股'?'selected':''}>台股</option><option value="大宗" ${item.market==='大宗'?'selected':''}>大宗</option></select></td>
                         <td><input type="text" value="${item.name}" onchange="updateTarget(${index}, 'name', this.value)"></td>
-                        <td>
-                            <select onchange="updateTarget(${index}, 'strategy', this.value)">
-                                <option value="短波段" ${item.strategy==='短波段'?'selected':''}>短波段</option>
-                                <option value="價值型" ${item.strategy==='價值型'?'selected':''}>價值型</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select onchange="updateTarget(${index}, 'stage', this.value)">
-                                <option value="觀察中" ${item.stage==='觀察中'?'selected':''}>🔍 觀察中</option>
-                                <option value="已佈局" ${item.stage==='已佈局'?'selected':''}>📈 已佈局</option>
-                            </select>
-                        </td>
+                        <td><select onchange="updateTarget(${index}, 'strategy', this.value)"><option value="短波段" ${item.strategy==='短波段'?'selected':''}>短波段</option><option value="價值型" ${item.strategy==='價值型'?'selected':''}>價值型</option></select></td>
+                        <td><select onchange="updateTarget(${index}, 'stage', this.value)"><option value="觀察中" ${item.stage==='觀察中'?'selected':''}>🔍 觀察中</option><option value="已佈局" ${item.stage==='已佈局'?'selected':''}>📈 已佈局</option></select></td>
                         <td><input type="number" value="${item.qty}" onchange="updateTarget(${index}, 'qty', this.value)"></td>
                         <td><input type="number" value="${item.cost}" onchange="updateTarget(${index}, 'cost', this.value)"></td>
                         <td><input type="number" value="${item.price}" onchange="updateTarget(${index}, 'price', this.value)"></td>
-                        <td class="${pnlClass}" style="font-weight: 600;">${displayPnl}</td>
+                        <td class="${pnlClass}" style="font-weight: 600;">${item.qty > 0 ? pnl : '-'}</td>
                         <td><button class="btn-delete" onclick="deleteTarget(${index})">🗑️</button></td>
-                    </tr>
-                `;
+                    </tr>`;
             });
         }
-
-        function addTargetRow() {
-            targets.push({ market: '台股', name: '', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 0 });
-            saveTargets(); renderTargets();
-        }
-
-        function updateTarget(index, field, value) {
-            if(['qty', 'cost', 'price'].includes(field)) targets[index][field] = parseFloat(value) || 0;
-            else targets[index][field] = value;
-            saveTargets(); renderTargets();
-        }
-
-        function deleteTarget(index) {
-            if(confirm('確定刪除此標的？')) { targets.splice(index, 1); saveTargets(); renderTargets(); }
-        }
+        function addTargetRow() { targets.push({ market: '台股', name: '', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 0 }); saveTargets(); renderTargets(); }
+        function updateTarget(index, field, value) { if(['qty', 'cost', 'price'].includes(field)) targets[index][field] = parseFloat(value) || 0; else targets[index][field] = value; saveTargets(); renderTargets(); }
+        function deleteTarget(index) { if(confirm('確定刪除此標的？')) { targets.splice(index, 1); saveTargets(); renderTargets(); } }
         function saveTargets() { localStorage.setItem('trading_targets', JSON.stringify(targets)); }
 
-
-        // ==========================================
-        // 視圖 2：投資交易紀錄邏輯
-        // ==========================================
         function renderTrans() {
             const tbody = document.getElementById('trans-body');
             tbody.innerHTML = '';
             transactions.forEach((item, index) => {
-                // 計算總金額：買入流出為負，賣出流入為正
                 let rawTotal = item.price * item.qty;
                 let displayTotal = item.action === '買入' ? -Math.abs(rawTotal) : Math.abs(rawTotal);
-                
-                // 動態標籤樣式
-                let actionTag = item.action === '買入' ? 'tag-green' : 'tag-orange';
-
                 tbody.innerHTML += `
                     <tr>
                         <td><input type="date" value="${item.date}" onchange="updateTrans(${index}, 'date', this.value)"></td>
-                        <td><input type="text" value="${item.target}" onchange="updateTrans(${index}, 'target', this.value)" placeholder="例：鴻海"></td>
-                        <td>
-                            <select onchange="updateTrans(${index}, 'type', this.value)">
-                                <option value="單筆申購" ${item.type==='單筆申購'?'selected':''}>單筆申購</option>
-                                <option value="定期定額" ${item.type==='定期定額'?'selected':''}>定期定額</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="tag ${actionTag}" style="appearance: none; text-align: center; font-weight: bold; cursor: pointer;" onchange="updateTrans(${index}, 'action', this.value)">
-                                <option value="買入" ${item.action==='買入'?'selected':''}>買入</option>
-                                <option value="賣出" ${item.action==='賣出'?'selected':''}>賣出</option>
-                            </select>
-                        </td>
+                        <td><input type="text" value="${item.target}" onchange="updateTrans(${index}, 'target', this.value)"></td>
+                        <td><select onchange="updateTrans(${index}, 'type', this.value)"><option value="單筆申購" ${item.type==='單筆申購'?'selected':''}>單筆申購</option><option value="定期定額" ${item.type==='定期定額'?'selected':''}>定期定額</option></select></td>
+                        <td><select class="tag ${item.action === '買入' ? 'tag-green' : 'tag-orange'}" style="appearance:none; text-align:center; cursor:pointer;" onchange="updateTrans(${index}, 'action', this.value)"><option value="買入" ${item.action==='買入'?'selected':''}>買入</option><option value="賣出" ${item.action==='賣出'?'selected':''}>賣出</option></select></td>
                         <td><input type="number" value="${item.price}" onchange="updateTrans(${index}, 'price', this.value)"></td>
                         <td><input type="number" value="${item.qty}" onchange="updateTrans(${index}, 'qty', this.value)"></td>
                         <td style="font-weight: 500;">$${displayTotal.toLocaleString()}</td>
                         <td style="text-align: center;"><input type="checkbox" ${item.reviewed ? 'checked' : ''} onchange="updateTrans(${index}, 'reviewed', this.checked)"></td>
-                        <td><input type="text" value="${item.note}" onchange="updateTrans(${index}, 'note', this.value)" placeholder="輸入備註"></td>
+                        <td><input type="text" value="${item.note}" onchange="updateTrans(${index}, 'note', this.value)"></td>
                         <td style="text-align: center;"><button class="btn-delete" onclick="deleteTrans(${index})">🗑️</button></td>
-                    </tr>
+                    </tr>`;
+            });
+        }
+        function addTransRow() { transactions.push({ date: new Date().toISOString().split('T')[0], target: '', type: '單筆申購', action: '買入', price: 0, qty: 0, reviewed: false, note: '' }); saveTrans(); renderTrans(); }
+        function updateTrans(index, field, value) { if(['price', 'qty'].includes(field)) transactions[index][field] = parseFloat(value) || 0; else transactions[index][field] = value; saveTrans(); renderTrans(); }
+        function deleteTrans(index) { if(confirm('確定刪除？')) { transactions.splice(index, 1); saveTrans(); renderTrans(); } }
+        function saveTrans() { localStorage.setItem('trading_trans', JSON.stringify(transactions)); }
+
+        // ==========================================
+        // 視圖 3：投資分析與筆記
+        // ==========================================
+        function renderNotes() {
+            const list = document.getElementById('notes-list');
+            list.innerHTML = '';
+            
+            // 反轉陣列，讓最新新增的筆記顯示在最上方
+            [...notes].reverse().forEach(note => {
+                let typeTagColor = 'tag-blue';
+                if(note.type === '交易覆盤') typeTagColor = 'tag-orange';
+                if(note.type === '產業研報') typeTagColor = 'tag-green';
+                
+                list.innerHTML += `
+                    <div class="note-card">
+                        <div class="note-header">
+                            <h3 class="note-title">📑 ${note.title}</h3>
+                            <div class="note-meta">
+                                <span class="tag ${typeTagColor}">${note.type}</span>
+                                <span class="tag tag-gray">🎯 ${note.target}</span>
+                                <span>🗓️ ${note.date}</span>
+                            </div>
+                            <button class="btn-del-note" onclick="deleteNote(${note.id})" title="刪除筆記">✖</button>
+                        </div>
+                        <div class="note-body">
+                            <div>
+                                <div class="note-section">
+                                    <h5>🔍 核心關鍵摘要</h5>
+                                    <p>${note.summary}</p>
+                                </div>
+                                <div class="note-section">
+                                    <h5 style="color: #c62828;">⚠️ 投資風險與反向查證</h5>
+                                    <p>${note.risk}</p>
+                                </div>
+                            </div>
+                            <div style="background: #fdfdfc; padding: 15px; border-radius: 6px; border: 1px solid #f1f1f0; height: fit-content;">
+                                <div class="note-section" style="margin-bottom: 0;">
+                                    <h5 style="color: #1e6235;">🎯 投資行動啟發</h5>
+                                    <p>${note.action}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
         }
 
-        function addTransRow() {
-            const today = new Date().toISOString().split('T')[0];
-            transactions.push({ date: today, target: '', type: '單筆申購', action: '買入', price: 0, qty: 0, reviewed: false, note: '' });
-            saveTrans(); renderTrans();
+        function saveNewNote() {
+            const title = document.getElementById('note-title').value;
+            if(!title) { alert('請至少輸入報告標題！'); return; }
+
+            const newNote = {
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                title: title,
+                type: document.getElementById('note-type').value,
+                target: document.getElementById('note-target').value,
+                summary: document.getElementById('note-summary').value,
+                risk: document.getElementById('note-risk').value,
+                action: document.getElementById('note-action').value
+            };
+
+            notes.push(newNote);
+            localStorage.setItem('trading_notes', JSON.stringify(notes));
+            
+            // 清空表單
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-target').value = '';
+            document.getElementById('note-summary').value = '';
+            document.getElementById('note-risk').value = '';
+            document.getElementById('note-action').value = '';
+            
+            renderNotes();
         }
 
-        function updateTrans(index, field, value) {
-            if(['price', 'qty'].includes(field)) transactions[index][field] = parseFloat(value) || 0;
-            else transactions[index][field] = value;
-            saveTrans(); renderTrans();
-        }
-
-        function deleteTrans(index) {
-            if(confirm('確定刪除這筆交易紀錄嗎？')) {
-                transactions.splice(index, 1);
-                saveTrans(); renderTrans();
+        function deleteNote(id) {
+            if(confirm('確定要刪除這篇分析筆記嗎？')) {
+                notes = notes.filter(n => n.id !== id);
+                localStorage.setItem('trading_notes', JSON.stringify(notes));
+                renderNotes();
             }
         }
-        function saveTrans() { localStorage.setItem('trading_trans', JSON.stringify(transactions)); }
 
         // 啟動渲染
-        window.onload = () => { renderTargets(); renderTrans(); };
+        window.onload = () => { renderTargets(); renderTrans(); renderNotes(); };
     </script>
 </body>
 </html>
