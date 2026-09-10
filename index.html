@@ -1,96 +1,157 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>短波段交易日誌</title>
+    <title>投資日誌筆記</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { background: #2b5876; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
-        button:hover { background: #1e3f56; }
-        .card { background: #fdfdfd; border-left: 5px solid #2b5876; padding: 15px; margin-top: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .risk-text { color: #d32f2f; font-weight: bold; }
+        /* 基礎字體與背景設定，還原 Notion 風格 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #ffffff; color: #37352f; margin: 0; padding: 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 50px 20px; }
+        
+        /* 頂部封面圖 */
+        .cover-image { width: 100%; height: 220px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); background-image: url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; border-radius: 0 0 12px 12px; }
+        
+        /* 標題區塊 */
+        .header-title { font-size: 36px; font-weight: 700; margin: 30px 0 10px 0; border-bottom: 1px solid #ededed; padding-bottom: 15px; }
+        .header-desc { font-size: 14px; color: #787774; margin-bottom: 30px; line-height: 1.6; }
+        
+        /* 雙欄排版 */
+        .main-layout { display: flex; gap: 30px; align-items: flex-start; }
+        
+        /* 左側邊欄 */
+        .sidebar { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
+        .sidebar-box { padding: 15px; border-radius: 8px; font-size: 14px; }
+        .box-yellow { background-color: #fcf9e3; }
+        .box-gray { background-color: #f1f1f0; }
+        .box-blue { background-color: #e8f0fe; }
+        .sidebar-box h4 { margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-size: 15px; }
+        .sidebar-item { padding: 5px 0; color: #37352f; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .sidebar-item:hover { background-color: rgba(0,0,0,0.05); border-radius: 4px; }
+
+        /* 右側主內容區 */
+        .content { flex: 1; }
+        
+        /* 標籤列 (Tabs) */
+        .tabs { display: flex; gap: 20px; border-bottom: 1px solid #ededed; padding-bottom: 10px; margin-bottom: 20px; font-size: 14px; color: #787774; }
+        .tab { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+        .tab.active { background-color: #f1f1f0; color: #37352f; font-weight: 600; }
+        
+        /* 卡片網格 (Gallery View) */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        
+        /* 單張卡片設計 */
+        .card { border: 1px solid #e1e1e1; border-radius: 8px; overflow: hidden; transition: box-shadow 0.2s; background: #fff; cursor: pointer; }
+        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .card-img { height: 120px; background: #f7f7f5; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .card-body { padding: 12px; }
+        .card-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+        .tag-group { display: flex; gap: 6px; margin-bottom: 8px; }
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .tag-gray { background: #e3e2e0; color: #32302c; }
+        .tag-red { background: #ffe2dd; color: #5c1a16; }
+        .tag-blue { background: #d3e5ef; color: #183347; }
+        .tag-yellow { background: #fdecc8; color: #402c1b; }
+        .card-data { font-size: 13px; color: #787774; display: flex; align-items: center; gap: 6px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>⚖️ 交易客觀查證台</h1>
-        
-        <div class="form-group">
-            <label>標的 (例如：白銀、銅、PCB)</label>
-            <input type="text" id="asset" placeholder="輸入標的...">
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex:1;">
-                <label>進場價</label>
-                <input type="number" id="entry" placeholder="0.0">
-            </div>
-            <div class="form-group" style="flex:1;">
-                <label>破線停損價</label>
-                <input type="number" id="stop" placeholder="0.0">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>🟢 看多理由 (事件面/需求支撐)</label>
-            <textarea id="long_reason" rows="2" placeholder="例：台股PCB需求帶動銅用量..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>🔴 看空風險 (強迫查證反面觀點)</label>
-            <textarea id="short_reason" rows="2" placeholder="例：精煉銅產能過剩、美元走強..."></textarea>
-        </div>
-        
-        <button onclick="saveTrade()">新增客觀查證紀錄</button>
 
-        <h2 style="margin-top: 40px;">📂 歷史查證紀錄</h2>
-        <div id="logArea"></div>
+    <div class="cover-image"></div>
+
+    <div class="container">
+        <div class="header-title">投資日誌筆記：個人資產管理&決策思考</div>
+        <div class="header-desc">
+            💡 三個實用核心，不只是單純記帳 告別瑣碎的手動管理...<br>
+            1. 👍 🎯 投資標的&績效：建立您想追蹤的標的。<br>
+            2. 👍 📝 投資交易紀錄：登錄您剛才新增的最新一筆交易，維持不預設立場的客觀檢驗。
+        </div>
+
+        <div class="main-layout">
+            <!-- 左側邊欄 -->
+            <div class="sidebar">
+                <div class="sidebar-box box-yellow">
+                    <h4>📁 資料庫</h4>
+                    <div class="sidebar-item">🎯 投資標的&績效</div>
+                    <div class="sidebar-item">☑️ 投資交易紀錄</div>
+                    <div class="sidebar-item">🔖 投資分析&筆記</div>
+                </div>
+                <div class="sidebar-box box-gray">
+                    <h4>📝 MEMO</h4>
+                    <div style="font-size: 13px; color: #787774; margin-top: 5px;">破線嚴格停損，絕不凹單。</div>
+                </div>
+                <div class="sidebar-box box-blue">
+                    <h4>🌐 常用網站</h4>
+                    <div class="sidebar-item">📊 財報狗 (視覺化數據)</div>
+                    <div class="sidebar-item">📈 TradingView (大宗商品)</div>
+                </div>
+            </div>
+
+            <!-- 右側畫廊視圖 -->
+            <div class="content">
+                <div class="tabs">
+                    <div class="tab active">▤ Board</div>
+                    <div class="tab">▦ 表格</div>
+                    <div class="tab">🔍 觀望中</div>
+                    <div class="tab">📈 已佈局</div>
+                </div>
+
+                <div class="grid">
+                    <!-- 卡片 1 -->
+                    <div class="card">
+                        <div class="card-img" style="background-color: #fff8e1;">🥇</div>
+                        <div class="card-body">
+                            <div class="card-title">黃金 (Gold)</div>
+                            <div class="tag-group">
+                                <span class="tag tag-yellow">等待抄底</span>
+                                <span class="tag tag-gray">原物料</span>
+                            </div>
+                            <div class="card-data">📉 目標區間: 4000-4200</div>
+                        </div>
+                    </div>
+
+                    <!-- 卡片 2 -->
+                    <div class="card">
+                        <div class="card-img" style="background-color: #e0f7fa;">⛏️</div>
+                        <div class="card-body">
+                            <div class="card-title">倫敦銅 (Copper)</div>
+                            <div class="tag-group">
+                                <span class="tag tag-blue">短波段</span>
+                                <span class="tag tag-gray">原物料</span>
+                            </div>
+                            <div class="card-data">⚠️ 留意精煉銅產能過剩</div>
+                        </div>
+                    </div>
+
+                    <!-- 卡片 3 -->
+                    <div class="card">
+                        <div class="card-img" style="background-color: #f1f8e9;">💾</div>
+                        <div class="card-body">
+                            <div class="card-title">台股 PCB 族群</div>
+                            <div class="tag-group">
+                                <span class="tag tag-red">觀察中</span>
+                                <span class="tag tag-gray">台股</span>
+                            </div>
+                            <div class="card-data">📊 追蹤銅用量與毛利率</div>
+                        </div>
+                    </div>
+
+                    <!-- 卡片 4 -->
+                    <div class="card">
+                        <div class="card-img" style="background-color: #f3e5f5;">🥈</div>
+                        <div class="card-body">
+                            <div class="card-title">白銀 (Silver)</div>
+                            <div class="tag-group">
+                                <span class="tag tag-blue">短波段</span>
+                                <span class="tag tag-gray">原物料</span>
+                            </div>
+                            <div class="card-data">🔍 系統性比對追蹤中</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // 讀取瀏覽器記憶體
-        let trades = JSON.parse(localStorage.getItem('trading_logs')) || [];
-
-        function renderLogs() {
-            const area = document.getElementById('logArea');
-            area.innerHTML = '';
-            trades.reverse().forEach(t => {
-                area.innerHTML += `
-                    <div class="card">
-                        <h3>${t.asset} <span style="font-size:14px; color:#666;">(${t.date})</span></h3>
-                        <p>進場: ${t.entry} | <span class="risk-text">停損: ${t.stop}</span></p>
-                        <p><strong>看多:</strong> ${t.long_reason}</p>
-                        <p><strong>看空:</strong> ${t.short_reason}</p>
-                    </div>
-                `;
-            });
-        }
-
-        function saveTrade() {
-            const asset = document.getElementById('asset').value;
-            if(!asset) return alert("請填寫標的！");
-            
-            const newTrade = {
-                date: new Date().toLocaleDateString(),
-                asset: asset,
-                entry: document.getElementById('entry').value,
-                stop: document.getElementById('stop').value,
-                long_reason: document.getElementById('long_reason').value,
-                short_reason: document.getElementById('short_reason').value
-            };
-            
-            trades.push(newTrade);
-            localStorage.setItem('trading_logs', JSON.stringify(trades));
-            renderLogs();
-            
-            document.querySelectorAll('input, textarea').forEach(el => el.value = '');
-        }
-
-        window.onload = renderLogs;
-    </script>
 </body>
 </html>
