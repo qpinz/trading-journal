@@ -5,153 +5,202 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>投資日誌筆記</title>
     <style>
-        /* 基礎字體與背景設定，還原 Notion 風格 */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #ffffff; color: #37352f; margin: 0; padding: 0; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 50px 20px; }
-        
-        /* 頂部封面圖 */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 50px 20px; }
         .cover-image { width: 100%; height: 220px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); background-image: url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; border-radius: 0 0 12px 12px; }
-        
-        /* 標題區塊 */
         .header-title { font-size: 36px; font-weight: 700; margin: 30px 0 10px 0; border-bottom: 1px solid #ededed; padding-bottom: 15px; }
         .header-desc { font-size: 14px; color: #787774; margin-bottom: 30px; line-height: 1.6; }
         
-        /* 雙欄排版 */
         .main-layout { display: flex; gap: 30px; align-items: flex-start; }
-        
-        /* 左側邊欄 */
         .sidebar { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
         .sidebar-box { padding: 15px; border-radius: 8px; font-size: 14px; }
         .box-yellow { background-color: #fcf9e3; }
         .box-gray { background-color: #f1f1f0; }
-        .box-blue { background-color: #e8f0fe; }
         .sidebar-box h4 { margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-size: 15px; }
-        .sidebar-item { padding: 5px 0; color: #37352f; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .sidebar-item:hover { background-color: rgba(0,0,0,0.05); border-radius: 4px; }
+        .sidebar-item { padding: 8px 5px; color: #37352f; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s; }
+        .sidebar-item:hover, .sidebar-item.active { background-color: rgba(0,0,0,0.08); }
 
-        /* 右側主內容區 */
-        .content { flex: 1; }
+        .content { flex: 1; min-width: 0; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
         
-        /* 標籤列 (Tabs) */
-        .tabs { display: flex; gap: 20px; border-bottom: 1px solid #ededed; padding-bottom: 10px; margin-bottom: 20px; font-size: 14px; color: #787774; }
-        .tab { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
-        .tab.active { background-color: #f1f1f0; color: #37352f; font-weight: 600; }
+        /* 表格視圖設計 (還原 Notion Table) */
+        .table-container { overflow-x: auto; margin-top: 10px; border: 1px solid #ededed; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #ededed; border-right: 1px solid #ededed; white-space: nowrap; }
+        th { color: #787774; font-weight: normal; background: #fdfdfc; }
+        td:last-child, th:last-child { border-right: none; }
         
-        /* 卡片網格 (Gallery View) */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        /* 隱藏原生輸入框樣式，實現點擊編輯 */
+        td input, td select { border: none; background: transparent; width: 100%; font-size: 14px; outline: none; font-family: inherit; color: inherit; box-sizing: border-box; padding: 4px; border-radius: 4px; }
+        td input:hover, td select:hover, td input:focus, td select:focus { background: #f1f1f0; }
         
-        /* 單張卡片設計 */
-        .card { border: 1px solid #e1e1e1; border-radius: 8px; overflow: hidden; transition: box-shadow 0.2s; background: #fff; cursor: pointer; }
-        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .card-img { height: 120px; background: #f7f7f5; display: flex; align-items: center; justify-content: center; font-size: 40px; }
-        .card-body { padding: 12px; }
-        .card-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
-        .tag-group { display: flex; gap: 6px; margin-bottom: 8px; }
-        .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        .tag-gray { background: #e3e2e0; color: #32302c; }
-        .tag-red { background: #ffe2dd; color: #5c1a16; }
-        .tag-blue { background: #d3e5ef; color: #183347; }
-        .tag-yellow { background: #fdecc8; color: #402c1b; }
-        .card-data { font-size: 13px; color: #787774; display: flex; align-items: center; gap: 6px; }
+        .btn-add { background: none; border: none; color: #787774; cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 5px; font-size: 14px; width: 100%; text-align: left; }
+        .btn-add:hover { background-color: #f1f1f0; color: #37352f; }
+        .profit { color: #d94228; } /* 獲利紅 */
+        .loss { color: #438767; } /* 虧損綠 (台股習慣) */
     </style>
 </head>
 <body>
-
     <div class="cover-image"></div>
-
     <div class="container">
         <div class="header-title">投資日誌筆記：個人資產管理&決策思考</div>
         <div class="header-desc">
-            💡 三個實用核心，不只是單純記帳 告別瑣碎的手動管理...<br>
-            1. 👍 🎯 投資標的&績效：建立您想追蹤的標的。<br>
-            2. 👍 📝 投資交易紀錄：登錄您剛才新增的最新一筆交易，維持不預設立場的客觀檢驗。
+            💡 客觀交叉查證台：拆解商業邏輯、緊盯毛利率底層數據。<br>
+            ⚠️ 嚴守紀律：破線無條件出場，絕不預設立場。
         </div>
 
         <div class="main-layout">
-            <!-- 左側邊欄 -->
+            <!-- 左側邊欄選單 -->
             <div class="sidebar">
                 <div class="sidebar-box box-yellow">
                     <h4>📁 資料庫</h4>
-                    <div class="sidebar-item">🎯 投資標的&績效</div>
-                    <div class="sidebar-item">☑️ 投資交易紀錄</div>
-                    <div class="sidebar-item">🔖 投資分析&筆記</div>
+                    <div class="sidebar-item active" onclick="switchView('table')">🎯 投資標的&績效</div>
+                    <div class="sidebar-item" onclick="switchView('gallery')">☑️ 投資交易紀錄</div>
                 </div>
                 <div class="sidebar-box box-gray">
                     <h4>📝 MEMO</h4>
-                    <div style="font-size: 13px; color: #787774; margin-top: 5px;">破線嚴格停損，絕不凹單。</div>
-                </div>
-                <div class="sidebar-box box-blue">
-                    <h4>🌐 常用網站</h4>
-                    <div class="sidebar-item">📊 財報狗 (視覺化數據)</div>
-                    <div class="sidebar-item">📈 TradingView (大宗商品)</div>
+                    <div style="font-size: 13px; color: #787774; margin-top: 5px;">不預設立場<br>短波段首重風控</div>
                 </div>
             </div>
 
-            <!-- 右側畫廊視圖 -->
+            <!-- 右側內容區 -->
             <div class="content">
-                <div class="tabs">
-                    <div class="tab active">▤ Board</div>
-                    <div class="tab">▦ 表格</div>
-                    <div class="tab">🔍 觀望中</div>
-                    <div class="tab">📈 已佈局</div>
+                <!-- 視圖 1：投資標的表格 -->
+                <div id="view-table" class="view-section active">
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px; color: #787774; font-size: 14px; border-bottom: 1px solid #ededed; padding-bottom: 10px;">
+                        <span style="color: #37352f; font-weight: 600;">▤ 表格視圖</span>
+                    </div>
+                    <div style="font-size: 12px; color: #787774; margin-bottom: 10px;">
+                        📍 點擊表格內任意欄位即可直接修改文字與數字。系統會自動計算總損益。
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">◎ 市場</th>
+                                    <th>Aa 標的名稱</th>
+                                    <th>◎ 策略</th>
+                                    <th>∑ 階段</th>
+                                    <th>持有股數/口數</th>
+                                    <th>投入均價</th>
+                                    <th>最新報價</th>
+                                    <th>∑ 預估損益</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- JS 動態渲染資料 -->
+                            </tbody>
+                        </table>
+                        <button class="btn-add" onclick="addRow()">+ 新增一筆資料</button>
+                    </div>
                 </div>
 
-                <div class="grid">
-                    <!-- 卡片 1 -->
-                    <div class="card">
-                        <div class="card-img" style="background-color: #fff8e1;">🥇</div>
-                        <div class="card-body">
-                            <div class="card-title">黃金 (Gold)</div>
-                            <div class="tag-group">
-                                <span class="tag tag-yellow">等待抄底</span>
-                                <span class="tag tag-gray">原物料</span>
-                            </div>
-                            <div class="card-data">📉 目標區間: 4000-4200</div>
-                        </div>
-                    </div>
-
-                    <!-- 卡片 2 -->
-                    <div class="card">
-                        <div class="card-img" style="background-color: #e0f7fa;">⛏️</div>
-                        <div class="card-body">
-                            <div class="card-title">倫敦銅 (Copper)</div>
-                            <div class="tag-group">
-                                <span class="tag tag-blue">短波段</span>
-                                <span class="tag tag-gray">原物料</span>
-                            </div>
-                            <div class="card-data">⚠️ 留意精煉銅產能過剩</div>
-                        </div>
-                    </div>
-
-                    <!-- 卡片 3 -->
-                    <div class="card">
-                        <div class="card-img" style="background-color: #f1f8e9;">💾</div>
-                        <div class="card-body">
-                            <div class="card-title">台股 PCB 族群</div>
-                            <div class="tag-group">
-                                <span class="tag tag-red">觀察中</span>
-                                <span class="tag tag-gray">台股</span>
-                            </div>
-                            <div class="card-data">📊 追蹤銅用量與毛利率</div>
-                        </div>
-                    </div>
-
-                    <!-- 卡片 4 -->
-                    <div class="card">
-                        <div class="card-img" style="background-color: #f3e5f5;">🥈</div>
-                        <div class="card-body">
-                            <div class="card-title">白銀 (Silver)</div>
-                            <div class="tag-group">
-                                <span class="tag tag-blue">短波段</span>
-                                <span class="tag tag-gray">原物料</span>
-                            </div>
-                            <div class="card-data">🔍 系統性比對追蹤中</div>
-                        </div>
+                <!-- 視圖 2：開發中佔位符 (原本的畫廊) -->
+                <div id="view-gallery" class="view-section">
+                    <div style="padding: 40px; text-align: center; color: #787774; border: 1px dashed #ccc; border-radius: 8px;">
+                        <h3>🚧 這裡可以整合先前的多空查證表單</h3>
+                        <p>點擊左側「投資標的&績效」回到表格視圖</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script>
+        // 初始化讀取 LocalStorage，如果沒有資料則帶入你關注的商品作為預設範例
+        let targets = JSON.parse(localStorage.getItem('trading_targets')) || [
+            { market: '大宗', name: '倫敦銅', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 4.5 },
+            { market: '台股', name: 'PCB族群', strategy: '事件驅動', stage: '已佈局', qty: 2, cost: 120, price: 125 },
+            { market: '大宗', name: '黃金', strategy: '抄底', stage: '等待中', qty: 0, cost: 0, price: 4100 }
+        ];
+
+        // 切換視圖功能
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            
+            // 處理側邊欄 highlight
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // 渲染表格資料
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            targets.forEach((item, index) => {
+                // 計算損益 (報價 - 均價) * 數量
+                const pnl = ((item.price - item.cost) * item.qty).toFixed(2);
+                let pnlClass = '';
+                if(pnl > 0) pnlClass = 'profit'; // 賺錢紅色
+                else if (pnl < 0) pnlClass = 'loss'; // 賠錢綠色
+                
+                const displayPnl = item.qty > 0 ? pnl : '-';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <select onchange="updateData(${index}, 'market', this.value)">
+                                <option value="台股" ${item.market==='台股'?'selected':''}>台股</option>
+                                <option value="美股" ${item.market==='美股'?'selected':''}>美股</option>
+                                <option value="大宗" ${item.market==='大宗'?'selected':''}>大宗</option>
+                            </select>
+                        </td>
+                        <td><input type="text" value="${item.name}" onchange="updateData(${index}, 'name', this.value)" placeholder="輸入名稱"></td>
+                        <td>
+                            <select onchange="updateData(${index}, 'strategy', this.value)">
+                                <option value="短波段" ${item.strategy==='短波段'?'selected':''}>短波段</option>
+                                <option value="價值型" ${item.strategy==='價值型'?'selected':''}>價值型</option>
+                                <option value="事件驅動" ${item.strategy==='事件驅動'?'selected':''}>事件驅動</option>
+                                <option value="抄底" ${item.strategy==='抄底'?'selected':''}>抄底</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select onchange="updateData(${index}, 'stage', this.value)">
+                                <option value="觀察中" ${item.stage==='觀察中'?'selected':''}>🔍 觀察中</option>
+                                <option value="等待中" ${item.stage==='等待中'?'selected':''}>⏳ 等待中</option>
+                                <option value="已佈局" ${item.stage==='已佈局'?'selected':''}>📈 已佈局</option>
+                                <option value="已清倉" ${item.stage==='已清倉'?'selected':''}>🏁 已清倉</option>
+                            </select>
+                        </td>
+                        <td><input type="number" value="${item.qty}" onchange="updateData(${index}, 'qty', this.value)"></td>
+                        <td><input type="number" value="${item.cost}" onchange="updateData(${index}, 'cost', this.value)"></td>
+                        <td><input type="number" value="${item.price}" onchange="updateData(${index}, 'price', this.value)"></td>
+                        <td class="${pnlClass}" style="font-weight: 600;">${displayPnl}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 新增一筆空白資料
+        function addRow() {
+            targets.push({ market: '台股', name: '', strategy: '短波段', stage: '觀察中', qty: 0, cost: 0, price: 0 });
+            saveData();
+            renderTable();
+        }
+
+        // 更新特定欄位資料
+        function updateData(index, field, value) {
+            // 如果是數字欄位，轉為浮點數
+            if(['qty', 'cost', 'price'].includes(field)) {
+                targets[index][field] = parseFloat(value) || 0;
+            } else {
+                targets[index][field] = value;
+            }
+            saveData();
+            renderTable(); // 重新渲染以更新損益計算
+        }
+
+        // 儲存至瀏覽器
+        function saveData() {
+            localStorage.setItem('trading_targets', JSON.stringify(targets));
+        }
+
+        // 網頁載入時啟動
+        window.onload = renderTable;
+    </script>
 </body>
 </html>
