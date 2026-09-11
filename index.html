@@ -11,7 +11,6 @@
         .header-title { font-size: 36px; font-weight: 700; margin: 25px 0 10px 0; border-bottom: 1px solid #ededed; padding-bottom: 15px; }
         .header-desc { font-size: 14px; color: #787774; margin-bottom: 25px; line-height: 1.6; }
         
-        /* 佈局 */
         .main-layout { display: flex; gap: 30px; align-items: flex-start; }
         .sidebar { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
         .sidebar-box { padding: 15px; border-radius: 8px; font-size: 14px; }
@@ -24,7 +23,6 @@
         .view-section { display: none; }
         .view-section.active { display: block; }
         
-        /* 表格樣式 */
         .table-container { overflow-x: auto; margin-top: 10px; border: 1px solid #ededed; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
         th, td { padding: 8px 10px; border-bottom: 1px solid #ededed; border-right: 1px solid #ededed; white-space: nowrap; }
@@ -43,13 +41,11 @@
         .profit { color: #d94228; }
         .loss { color: #438767; }
 
-        /* 風控儀表板樣式 */
         .risk-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
         .risk-card { background: #fafafa; border: 1px solid #e1e1e1; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .risk-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #787774; display: flex; align-items: center; gap: 6px; }
         .risk-value { font-size: 32px; font-weight: 700; color: #37352f; }
 
-        /* 筆記區塊樣式 */
         .note-form { background: #fdfdfc; border: 1px solid #ededed; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-col { flex: 1; }
@@ -65,7 +61,6 @@
         .note-section h5 { margin: 0 0 8px 0; font-size: 14px; color: #37352f; }
         .note-section p { margin: 0; font-size: 13px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
 
-        /* PDCA 覆盤樣式 (融入6大問題) */
         .pdca-header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #ededed; padding-bottom: 15px; margin-bottom: 20px; }
         .pdca-title-input { font-size: 24px; font-weight: 700; border: none; outline: none; width: 100%; font-family: inherit; }
         .pdca-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -80,18 +75,23 @@
         
         .back-btn { background: #f1f1f0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 5px; }
         .back-btn:hover { background: #e3e2e0; }
+
+        /* 圖片上傳區塊樣式 */
+        .image-upload-area { border: 2px dashed #ddd; border-radius: 6px; padding: 20px; text-align: center; background: #fff; cursor: pointer; position: relative; transition: border-color 0.2s; }
+        .image-upload-area:hover { border-color: #37352f; }
+        .image-preview-container { display: none; position: relative; margin-top: 10px; }
+        .image-preview-container img { max-width: 100%; max-height: 350px; border-radius: 4px; border: 1px solid #e1e1e1; }
+        .btn-remove-img { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: 1px solid #ddd; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px; font-weight: bold; color: #c62828; }
+        .btn-remove-img:hover { background: #ffebee; }
     </style>
 </head>
 <body>
     <div class="cover-image"></div>
     <div class="container">
         <div class="header-title">投資日誌筆記：個人資產管理&決策思考</div>
-        <div class="header-desc">
-            💡 結合資產追蹤、報告筆記與 PDCA 循環，保持客觀，嚴格控管短波段風險。
-        </div>
+        <div class="header-desc">💡 結合資產追蹤、報告筆記與 PDCA 循環，保持客觀，嚴格控管短波段風險。</div>
 
         <div class="main-layout">
-            <!-- 左側邊欄 -->
             <div class="sidebar">
                 <div class="sidebar-box box-yellow">
                     <h4>📁 資料庫</h4>
@@ -106,31 +106,16 @@
                 </div>
             </div>
 
-            <!-- 右側內容區 -->
             <div class="content">
-                
                 <!-- 視圖 1：投資標的表 -->
                 <div id="view-table" class="view-section active">
                     <div style="font-size: 22px; font-weight: 600; margin-bottom: 5px;">🎯 投資標的&績效 (含日期與備註)</div>
-                    <div style="font-size: 12px; color: #787774; margin-bottom: 10px;">
-                        📍 提醒：請務必填寫「乘數」(例如：現股/融資填1000，大台指填200，小台指填50)，系統才能正確計算你的真實曝險槓桿。
-                    </div>
+                    <div style="font-size: 12px; color: #787774; margin-bottom: 10px;">📍 提醒：請務必填寫「乘數」(例如：現股/融資填1000，大台指填200，小台指填50)，系統才能正確計算你的真實曝險槓桿。</div>
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 105px;">📅 日期</th>
-                                    <th style="width: 70px;">◎ 市場</th>
-                                    <th>Aa 標的名稱</th>
-                                    <th style="width: 70px;">◎ 類別</th>
-                                    <th style="width: 80px;">∑ 階段</th>
-                                    <th style="width: 60px;">數量</th>
-                                    <th style="width: 60px;">乘數</th>
-                                    <th style="width: 80px;">投入均價</th>
-                                    <th style="width: 80px;">最新報價</th>
-                                    <th style="width: 80px;">∑ 預估損益</th>
-                                    <th>Aa 備註</th>
-                                    <th style="width: 40px;"></th>
+                                    <th style="width: 105px;">📅 日期</th><th style="width: 70px;">◎ 市場</th><th>Aa 標的名稱</th><th style="width: 70px;">◎ 類別</th><th style="width: 80px;">∑ 階段</th><th style="width: 60px;">數量</th><th style="width: 60px;">乘數</th><th style="width: 80px;">投入均價</th><th style="width: 80px;">最新報價</th><th style="width: 80px;">∑ 預估損益</th><th>Aa 備註</th><th style="width: 40px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="target-body"></tbody>
@@ -147,55 +132,33 @@
                         <input type="number" id="account-capital" oninput="updateCapital(this.value)" value="0" style="font-size: 20px; font-weight: bold; padding: 8px; margin-top: 10px; border: 1px solid #ccc; border-radius: 4px; width: 250px;">
                     </div>
                     <div class="risk-dashboard">
-                        <div class="risk-card" style="border-left: 5px solid #37352f;">
-                            <h3>📊 總曝險金額 (名目本金)</h3>
-                            <div class="risk-value" id="risk-exposure">0</div>
-                            <div style="font-size: 12px; color: #787774; margin-top: 5px;">所有部位市值加總 (股價 × 數量 × 乘數)</div>
-                        </div>
-                        <div class="risk-card" style="border-left: 5px solid #d94228;">
-                            <h3>⚠️ 風險槓桿倍數</h3>
-                            <div class="risk-value" id="risk-leverage" style="color: #d94228;">0.00 x</div>
-                            <div style="font-size: 12px; color: #787774; margin-top: 5px;">總曝險 ÷ 總資金 (越高代表波動風險越大)</div>
-                        </div>
-                        <div class="risk-card">
-                            <h3>💰 未實現總損益</h3>
-                            <div class="risk-value" id="risk-pnl">0</div>
-                            <div style="font-size: 12px; color: #787774; margin-top: 5px;">含期貨與融資之浮動損益</div>
-                        </div>
-                        <div class="risk-card">
-                            <h3>📈 總投入成本估算</h3>
-                            <div class="risk-value" id="risk-cost">0</div>
-                            <div style="font-size: 12px; color: #787774; margin-top: 5px;">未扣除融資比例之原始總買價</div>
-                        </div>
+                        <div class="risk-card" style="border-left: 5px solid #37352f;"><h3>📊 總曝險金額 (名目本金)</h3><div class="risk-value" id="risk-exposure">0</div><div style="font-size: 12px; color: #787774; margin-top: 5px;">所有部位市值加總</div></div>
+                        <div class="risk-card" style="border-left: 5px solid #d94228;"><h3>⚠️ 風險槓桿倍數</h3><div class="risk-value" id="risk-leverage" style="color: #d94228;">0.00 x</div><div style="font-size: 12px; color: #787774; margin-top: 5px;">總曝險 ÷ 總資金</div></div>
+                        <div class="risk-card"><h3>💰 未實現總損益</h3><div class="risk-value" id="risk-pnl">0</div><div style="font-size: 12px; color: #787774; margin-top: 5px;">含期貨與融資之浮動損益</div></div>
+                        <div class="risk-card"><h3>📈 總投入成本估算</h3><div class="risk-value" id="risk-cost">0</div><div style="font-size: 12px; color: #787774; margin-top: 5px;">未扣除融資比例之原始總買價</div></div>
                     </div>
                 </div>
 
                 <!-- 視圖 3：投資分析與筆記 -->
                 <div id="view-notes" class="view-section">
                     <div style="font-size: 22px; font-weight: 600; margin-bottom: 15px;">🔖 投資分析&筆記</div>
-                    
-                    <!-- 新增筆記表單 -->
                     <div class="note-form">
                         <div class="form-row">
                             <div class="form-col" style="flex: 2;"><label>Aa 報告標題</label><input type="text" id="note-title" placeholder="例如：PCB 族群大漲與精煉銅連動分析"></div>
                             <div class="form-col"><label>◎ 類別</label><select id="note-type"><option value="產業研報">產業研報</option><option value="總經動向">總經動向</option></select></div>
                             <div class="form-col"><label>↗ 關聯標的</label><input type="text" id="note-target" placeholder="例如：銅/PCB"></div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-col"><label>🔍 核心關鍵摘要</label><textarea id="note-summary" placeholder="紀錄報告中的重點數據與推演邏輯..."></textarea></div>
-                        </div>
+                        <div class="form-row"><div class="form-col"><label>🔍 核心關鍵摘要</label><textarea id="note-summary" placeholder="紀錄報告中的重點數據與推演邏輯..."></textarea></div></div>
                         <div class="form-row">
                             <div class="form-col"><label>⚠️ 投資風險與反向查證 (不預設立場)</label><textarea id="note-risk" placeholder="潛在風險，例如產能過剩疑慮..."></textarea></div>
                             <div class="form-col"><label>🎯 投資行動啟發</label><textarea id="note-action" placeholder="具體的應對策略、進場條件與停損設定..."></textarea></div>
                         </div>
                         <div style="text-align: right;"><button class="btn-submit" onclick="saveNewNote()">儲存分析筆記</button></div>
                     </div>
-
-                    <!-- 筆記列表 -->
                     <div id="notes-list"></div>
                 </div>
 
-                <!-- 視圖 4：PDCA 覆盤 -->
+                <!-- 視圖 4：PDCA 覆盤清單 -->
                 <div id="view-pdca" class="view-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <div style="font-size: 22px; font-weight: 600;">📝 PDCA 交易日誌覆盤清單</div>
@@ -209,7 +172,7 @@
                     </div>
                 </div>
 
-                <!-- PDCA 內頁 (融入 6 大靈魂拷問) -->
+                <!-- PDCA 內頁 (含圖片上傳功能) -->
                 <div id="view-pdca-detail" class="view-section">
                     <button class="back-btn" onclick="switchView('pdca')">⬅ 返回列表</button>
                     <div class="pdca-header">
@@ -227,7 +190,6 @@
                             <h3>DO & CHECK 執行檢核</h3>
                             <span class="pdca-label">② 出場條件</span>
                             <textarea id="detail-exit" placeholder="→ 為何平倉？技術轉折？出量？達目標嗎？還是「怕」賠回去？有符合策略嗎？" oninput="saveCurrentPdcaField()"></textarea>
-                            
                             <span class="pdca-label">③ 當下心情 & 評估</span>
                             <textarea id="detail-emotion" placeholder="→ 寫下當下的感受：緊張、猶豫、衝動、自信？(盤後回顧容易發現情緒模式)" oninput="saveCurrentPdcaField()"></textarea>
                         </div>
@@ -239,9 +201,16 @@
                             <span class="pdca-label">④ 大盤、個股盤勢結構分析</span>
                             <textarea id="detail-market" placeholder="→ 今天屬於趨勢盤、盤整盤、震盪盤？當時的走勢跟預期有落差嗎？" style="min-height: 80px;" oninput="saveCurrentPdcaField()"></textarea>
                             
-                            <span class="pdca-label">⑤ 圖形截圖 (建議保留)</span>
-                            <div style="border: 2px dashed #e1e1e1; padding: 30px; text-align: center; color: #999; border-radius: 4px; font-size: 13px; background: #fff;">
-                                → 把進出場當下的走勢圖標註起來，每週回顧一次。<br>很多交易錯誤，會在這裡變得超清楚。<br>(此區塊為提醒作用，建議將圖檔存於本地資料夾)
+                            <span class="pdca-label">⑤ 圖形截圖 (直接 Ctrl+V 貼上即可，系統會自動壓縮)</span>
+                            <div class="image-upload-area" id="img-upload-zone" onclick="document.getElementById('detail-image-input').click()">
+                                <input type="file" id="detail-image-input" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                                <div id="image-upload-label" style="color: #999; font-size: 13px;">
+                                    📸 點擊此處選擇截圖檔案<br>或者直接在頁面上按下 <b>Ctrl+V</b> 貼上圖片
+                                </div>
+                                <div class="image-preview-container" id="image-preview-container">
+                                    <img id="detail-image-preview" src="">
+                                    <button class="btn-remove-img" onclick="removeImage(event)">🗑️ 移除圖片</button>
+                                </div>
                             </div>
                         </div>
                         <div class="act-box">
@@ -259,7 +228,6 @@
     <script>
         const todayStr = new Date().toLocaleDateString('zh-CA');
         
-        // --- 讀取資料 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || [];
         let accountCapital = parseFloat(localStorage.getItem('trading_capital')) || 0;
         document.getElementById('account-capital').value = accountCapital;
@@ -268,7 +236,6 @@
         let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca_v2')) || [];
         let currentEditingId = null;
 
-        // --- 導覽切換 ---
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
@@ -280,9 +247,7 @@
             if(viewName === 'account') calculateRisk();
         }
 
-        // ==========================================
-        // 標的與風控
-        // ==========================================
+        // --- 標的與風控 ---
         function renderTargets() {
             const tbody = document.getElementById('target-body');
             tbody.innerHTML = '';
@@ -335,9 +300,7 @@
             pnlEl.style.color = totalPnL > 0 ? '#d94228' : (totalPnL < 0 ? '#438767' : '#37352f');
         }
 
-        // ==========================================
-        // 投資筆記 (修復新增功能)
-        // ==========================================
+        // --- 投資筆記 ---
         function renderNotes() {
             const list = document.getElementById('notes-list');
             list.innerHTML = '';
@@ -345,10 +308,7 @@
                 list.innerHTML += `
                     <div class="note-card">
                         <button class="btn-delete" style="position: absolute; right: 15px; top: 15px;" onclick="deleteNote(${note.id})">✖ 刪除</button>
-                        <div class="note-header">
-                            <h3 class="note-title">📑 ${note.title}</h3>
-                            <div class="note-meta">${note.type} | 標的: ${note.target} | ${note.date}</div>
-                        </div>
+                        <div class="note-header"><h3 class="note-title">📑 ${note.title}</h3><div class="note-meta">${note.type} | 標的: ${note.target} | ${note.date}</div></div>
                         <div class="note-body">
                             <div>
                                 <div class="note-section"><h5>🔍 核心關鍵摘要</h5><p>${note.summary}</p></div>
@@ -365,8 +325,7 @@
             const title = document.getElementById('note-title').value;
             if(!title) return alert('請輸入標題');
             notes.push({
-                id: Date.now(), date: todayStr, title: title,
-                type: document.getElementById('note-type').value, target: document.getElementById('note-target').value,
+                id: Date.now(), date: todayStr, title: title, type: document.getElementById('note-type').value, target: document.getElementById('note-target').value,
                 summary: document.getElementById('note-summary').value, risk: document.getElementById('note-risk').value, action: document.getElementById('note-action').value
             });
             localStorage.setItem('trading_notes_v2', JSON.stringify(notes));
@@ -375,13 +334,11 @@
         }
         function deleteNote(id) { if(confirm('刪除這篇筆記？')) { notes = notes.filter(n => n.id !== id); localStorage.setItem('trading_notes_v2', JSON.stringify(notes)); renderNotes(); } }
 
-        // ==========================================
-        // PDCA 覆盤 (全新 6 大問題)
-        // ==========================================
+        // --- PDCA 覆盤與圖片壓縮功能 ---
         function renderPdcaList() {
             const tbody = document.getElementById('pdca-list-body');
             tbody.innerHTML = '';
-            pdcaLogs.forEach(log => {
+            [...pdcaLogs].reverse().forEach(log => {
                 tbody.innerHTML += `
                     <tr>
                         <td><a href="javascript:void(0)" onclick="openPdcaDetail('${log.id}')" style="color:#2b5876; font-weight:600; text-decoration:none;">📄 ${log.title}</a></td>
@@ -392,10 +349,11 @@
         }
         function addNewPdca() {
             const newId = Date.now().toString();
-            pdcaLogs.push({ id: newId, title: `交易日誌_${todayStr}-1`, date: todayStr, entry: '', exit: '', emotion: '', market: '', reflection: '' });
+            pdcaLogs.push({ id: newId, title: `交易日誌_${todayStr}-1`, date: todayStr, entry: '', exit: '', emotion: '', market: '', reflection: '', image: '' });
             localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs));
             openPdcaDetail(newId);
         }
+        
         function openPdcaDetail(id) {
             currentEditingId = id;
             const log = pdcaLogs.find(l => l.id === id);
@@ -403,9 +361,21 @@
             ['title', 'entry', 'exit', 'emotion', 'market', 'reflection'].forEach(f => {
                 if(document.getElementById(`detail-${f}`)) document.getElementById(`detail-${f}`).value = log[f] || '';
             });
+            
+            // 處理圖片載入
+            if(log.image) {
+                document.getElementById('detail-image-preview').src = log.image;
+                document.getElementById('image-preview-container').style.display = 'block';
+                document.getElementById('image-upload-label').style.display = 'none';
+                document.getElementById('img-upload-zone').style.borderColor = 'transparent';
+            } else {
+                removeImageUI();
+            }
+
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-pdca-detail').classList.add('active');
         }
+
         function saveCurrentPdcaField() {
             if(!currentEditingId) return;
             const log = pdcaLogs.find(l => l.id === currentEditingId);
@@ -416,7 +386,90 @@
                 localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs));
             }
         }
+        
         function deletePdca(id) { if(confirm('確定刪除？')) { pdcaLogs = pdcaLogs.filter(l => l.id !== id); localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs)); renderPdcaList(); } }
+
+        // --- 圖片處理引擎 (含壓縮以防塞爆 LocalStorage) ---
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            processImageFile(file);
+        }
+
+        function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1000; // 最大寬度限制
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH) {
+                        height = Math.round(height *= MAX_WIDTH / width);
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 壓縮成 JPEG, 品質 0.7，大幅降低 Base64 體積
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    document.getElementById('detail-image-preview').src = compressedBase64;
+                    document.getElementById('image-preview-container').style.display = 'block';
+                    document.getElementById('image-upload-label').style.display = 'none';
+                    document.getElementById('img-upload-zone').style.borderColor = 'transparent';
+                    
+                    if(currentEditingId) {
+                        const log = pdcaLogs.find(l => l.id === currentEditingId);
+                        if(log) {
+                            log.image = compressedBase64;
+                            localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs));
+                        }
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(e) {
+            if(e) e.stopPropagation();
+            removeImageUI();
+            if(currentEditingId) {
+                const log = pdcaLogs.find(l => l.id === currentEditingId);
+                if(log) {
+                    log.image = '';
+                    localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs));
+                }
+            }
+        }
+        
+        function removeImageUI() {
+            document.getElementById('detail-image-input').value = '';
+            document.getElementById('detail-image-preview').src = '';
+            document.getElementById('image-preview-container').style.display = 'none';
+            document.getElementById('image-upload-label').style.display = 'block';
+            document.getElementById('img-upload-zone').style.borderColor = '#ddd';
+        }
+
+        // --- 支援 Ctrl+V 貼上圖片 ---
+        document.getElementById('view-pdca-detail').addEventListener('paste', function(e) {
+            if(!currentEditingId) return;
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf("image") !== -1) {
+                    const file = items[i].getAsFile();
+                    processImageFile(file);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        });
 
         window.onload = () => { renderTargets(); };
     </script>
