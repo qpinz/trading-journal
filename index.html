@@ -11,6 +11,7 @@
         .header-title { font-size: 36px; font-weight: 700; margin: 25px 0 10px 0; border-bottom: 1px solid #ededed; padding-bottom: 15px; }
         .header-desc { font-size: 14px; color: #787774; margin-bottom: 25px; line-height: 1.6; }
         
+        /* 佈局 */
         .main-layout { display: flex; gap: 30px; align-items: flex-start; }
         .sidebar { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
         .sidebar-box { padding: 15px; border-radius: 8px; font-size: 14px; }
@@ -23,6 +24,7 @@
         .view-section { display: none; }
         .view-section.active { display: block; }
         
+        /* 表格樣式 */
         .table-container { overflow-x: auto; margin-top: 10px; border: 1px solid #ededed; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
         th, td { padding: 8px 10px; border-bottom: 1px solid #ededed; border-right: 1px solid #ededed; white-space: nowrap; }
@@ -41,11 +43,13 @@
         .profit { color: #d94228; }
         .loss { color: #438767; }
 
+        /* 風控儀表板樣式 */
         .risk-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
         .risk-card { background: #fafafa; border: 1px solid #e1e1e1; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .risk-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #787774; display: flex; align-items: center; gap: 6px; }
         .risk-value { font-size: 32px; font-weight: 700; color: #37352f; }
 
+        /* 筆記區塊樣式 */
         .note-form { background: #fdfdfc; border: 1px solid #ededed; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-col { flex: 1; }
@@ -61,6 +65,7 @@
         .note-section h5 { margin: 0 0 8px 0; font-size: 14px; color: #37352f; }
         .note-section p { margin: 0; font-size: 13px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
 
+        /* PDCA 覆盤樣式 */
         .pdca-header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #ededed; padding-bottom: 15px; margin-bottom: 20px; }
         .pdca-title-input { font-size: 24px; font-weight: 700; border: none; outline: none; width: 100%; font-family: inherit; }
         .pdca-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -120,7 +125,14 @@
                             </thead>
                             <tbody id="target-body"></tbody>
                         </table>
-                        <button class="btn-add" onclick="addTargetRow()">+ 新增一筆標的</button>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
+                            <button class="btn-add" style="width: auto;" onclick="addTargetRow()">+ 新增一筆標的</button>
+                            <!-- API 自動更新報價按鈕 -->
+                            <button class="btn-submit" id="api-update-btn" style="margin: 0; background: #2b5876; display: flex; gap: 6px;" onclick="fetchTaiwanStockPrices()">
+                                <span>🔄</span> 自動更新台股收盤價
+                            </button>
+                            <span style="font-size: 12px; color: #999;">(支援名稱與代號，盤後自動抓取證交所與櫃買中心資料)</span>
+                        </div>
                     </div>
                 </div>
 
@@ -172,7 +184,7 @@
                     </div>
                 </div>
 
-                <!-- PDCA 內頁 (含圖片上傳功能) -->
+                <!-- PDCA 內頁 -->
                 <div id="view-pdca-detail" class="view-section">
                     <button class="back-btn" onclick="switchView('pdca')">⬅ 返回列表</button>
                     <div class="pdca-header">
@@ -228,6 +240,7 @@
     <script>
         const todayStr = new Date().toLocaleDateString('zh-CA');
         
+        // --- 讀取資料 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || [];
         let accountCapital = parseFloat(localStorage.getItem('trading_capital')) || 0;
         document.getElementById('account-capital').value = accountCapital;
@@ -236,6 +249,7 @@
         let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca_v2')) || [];
         let currentEditingId = null;
 
+        // --- 導覽切換 ---
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
@@ -247,7 +261,9 @@
             if(viewName === 'account') calculateRisk();
         }
 
-        // --- 標的與風控 ---
+        // ==========================================
+        // 標的與風控 (含台股 API 自動更新)
+        // ==========================================
         function renderTargets() {
             const tbody = document.getElementById('target-body');
             tbody.innerHTML = '';
@@ -266,7 +282,7 @@
                         <td><input type="number" value="${item.qty}" onchange="updateTarget(${index}, 'qty', this.value)"></td>
                         <td><input type="number" value="${item.multiplier || 1000}" onchange="updateTarget(${index}, 'multiplier', this.value)"></td>
                         <td><input type="number" value="${item.cost}" onchange="updateTarget(${index}, 'cost', this.value)"></td>
-                        <td><input type="number" value="${item.price}" onchange="updateTarget(${index}, 'price', this.value)"></td>
+                        <td><input type="number" value="${item.price}" onchange="updateTarget(${index}, 'price', this.value)" id="price-${index}"></td>
                         <td class="${pnlClass}" style="font-weight: 600;">${displayPnl}</td>
                         <td><input type="text" value="${item.note || ''}" onchange="updateTarget(${index}, 'note', this.value)" placeholder="備註..."></td>
                         <td><button class="btn-delete" onclick="deleteTarget(${index})">🗑️</button></td>
@@ -279,6 +295,85 @@
         function deleteTarget(index) { if(confirm('確定刪除？')) { targets.splice(index, 1); saveTargets(); renderTargets(); } }
         function saveTargets() { localStorage.setItem('trading_targets_v3', JSON.stringify(targets)); }
 
+        // --- 核心：抓取台股 OpenAPI 報價 ---
+        async function fetchTaiwanStockPrices() {
+            const btn = document.getElementById('api-update-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span>⏳</span> 正在從證交所抓取資料...';
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+
+            try {
+                // 建立價格字典
+                const priceMap = {};
+                
+                // 1. 抓取上市資料 (TWSE)
+                const twseRes = await fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL');
+                if (twseRes.ok) {
+                    const twseData = await twseRes.json();
+                    twseData.forEach(item => {
+                        const price = parseFloat(item.ClosingPrice);
+                        if (!isNaN(price)) {
+                            priceMap[item.Code] = price;
+                            priceMap[item.Name] = price;
+                        }
+                    });
+                }
+
+                // 2. 抓取上櫃資料 (TPEx)
+                const tpexRes = await fetch('https://www.tpex.org.tw/openapi/v1/t187ap03_L');
+                if (tpexRes.ok) {
+                    const tpexData = await tpexRes.json();
+                    tpexData.forEach(item => {
+                        const price = parseFloat(item.Close);
+                        if (!isNaN(price)) {
+                            priceMap[item.SecuritiesCompanyCode] = price;
+                            priceMap[item.CompanyName] = price;
+                        }
+                    });
+                }
+
+                // 3. 更新表格中的資料
+                let updatedCount = 0;
+                targets.forEach((target, index) => {
+                    if (target.market === '台股' && target.name.trim() !== '') {
+                        const queryKey = target.name.trim();
+                        const newPrice = priceMap[queryKey];
+                        
+                        if (newPrice !== undefined && target.price !== newPrice) {
+                            target.price = newPrice;
+                            updatedCount++;
+                            // 給一個視覺上的短暫提示
+                            setTimeout(() => {
+                                const inputEl = document.getElementById(`price-${index}`);
+                                if(inputEl) {
+                                    inputEl.style.backgroundColor = '#e6f4ea';
+                                    setTimeout(() => inputEl.style.backgroundColor = 'transparent', 2000);
+                                }
+                            }, 100);
+                        }
+                    }
+                });
+
+                if (updatedCount > 0) {
+                    saveTargets();
+                    renderTargets();
+                    alert(`✅ 成功為您更新了 ${updatedCount} 筆台股最新收盤價！`);
+                } else {
+                    alert('⚠️ 沒有找到需要更新的標的。請確認「市場」是否選擇台股，且名稱或代號是否與證交所完全一致。');
+                }
+
+            } catch (error) {
+                console.error("API 抓取失敗:", error);
+                alert('❌ 無法連線至證交所 API，可能是網路問題或非交易時間伺服器維護中，請稍後再試。');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.style.opacity = '1';
+                btn.disabled = false;
+            }
+        }
+
+        // --- 風控總覽計算 ---
         function updateCapital(val) { accountCapital = parseFloat(val) || 0; localStorage.setItem('trading_capital', accountCapital); calculateRisk(); }
         function calculateRisk() {
             let totalExposure = 0, totalCost = 0, totalPnL = 0;
@@ -300,7 +395,9 @@
             pnlEl.style.color = totalPnL > 0 ? '#d94228' : (totalPnL < 0 ? '#438767' : '#37352f');
         }
 
-        // --- 投資筆記 ---
+        // ==========================================
+        // 投資筆記與 PDCA 區塊 (包含圖片處理)
+        // ==========================================
         function renderNotes() {
             const list = document.getElementById('notes-list');
             list.innerHTML = '';
@@ -324,17 +421,13 @@
         function saveNewNote() {
             const title = document.getElementById('note-title').value;
             if(!title) return alert('請輸入標題');
-            notes.push({
-                id: Date.now(), date: todayStr, title: title, type: document.getElementById('note-type').value, target: document.getElementById('note-target').value,
-                summary: document.getElementById('note-summary').value, risk: document.getElementById('note-risk').value, action: document.getElementById('note-action').value
-            });
+            notes.push({ id: Date.now(), date: todayStr, title: title, type: document.getElementById('note-type').value, target: document.getElementById('note-target').value, summary: document.getElementById('note-summary').value, risk: document.getElementById('note-risk').value, action: document.getElementById('note-action').value });
             localStorage.setItem('trading_notes_v2', JSON.stringify(notes));
             ['title','target','summary','risk','action'].forEach(id => document.getElementById(`note-${id}`).value = '');
             renderNotes();
         }
         function deleteNote(id) { if(confirm('刪除這篇筆記？')) { notes = notes.filter(n => n.id !== id); localStorage.setItem('trading_notes_v2', JSON.stringify(notes)); renderNotes(); } }
 
-        // --- PDCA 覆盤與圖片壓縮功能 ---
         function renderPdcaList() {
             const tbody = document.getElementById('pdca-list-body');
             tbody.innerHTML = '';
@@ -362,7 +455,6 @@
                 if(document.getElementById(`detail-${f}`)) document.getElementById(`detail-${f}`).value = log[f] || '';
             });
             
-            // 處理圖片載入
             if(log.image) {
                 document.getElementById('detail-image-preview').src = log.image;
                 document.getElementById('image-preview-container').style.display = 'block';
@@ -389,7 +481,6 @@
         
         function deletePdca(id) { if(confirm('確定刪除？')) { pdcaLogs = pdcaLogs.filter(l => l.id !== id); localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs)); renderPdcaList(); } }
 
-        // --- 圖片處理引擎 (含壓縮以防塞爆 LocalStorage) ---
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -402,23 +493,15 @@
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1000; // 最大寬度限制
+                    const MAX_WIDTH = 1000;
                     let width = img.width;
                     let height = img.height;
-                    
-                    if (width > MAX_WIDTH) {
-                        height = Math.round(height *= MAX_WIDTH / width);
-                        width = MAX_WIDTH;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
+                    if (width > MAX_WIDTH) { height = Math.round(height *= MAX_WIDTH / width); width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 壓縮成 JPEG, 品質 0.7，大幅降低 Base64 體積
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    
                     document.getElementById('detail-image-preview').src = compressedBase64;
                     document.getElementById('image-preview-container').style.display = 'block';
                     document.getElementById('image-upload-label').style.display = 'none';
@@ -426,10 +509,7 @@
                     
                     if(currentEditingId) {
                         const log = pdcaLogs.find(l => l.id === currentEditingId);
-                        if(log) {
-                            log.image = compressedBase64;
-                            localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs));
-                        }
+                        if(log) { log.image = compressedBase64; localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs)); }
                     }
                 };
                 img.src = e.target.result;
@@ -442,10 +522,7 @@
             removeImageUI();
             if(currentEditingId) {
                 const log = pdcaLogs.find(l => l.id === currentEditingId);
-                if(log) {
-                    log.image = '';
-                    localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs));
-                }
+                if(log) { log.image = ''; localStorage.setItem('trading_pdca_v2', JSON.stringify(pdcaLogs)); }
             }
         }
         
@@ -457,7 +534,6 @@
             document.getElementById('img-upload-zone').style.borderColor = '#ddd';
         }
 
-        // --- 支援 Ctrl+V 貼上圖片 ---
         document.getElementById('view-pdca-detail').addEventListener('paste', function(e) {
             if(!currentEditingId) return;
             const items = e.clipboardData.items;
