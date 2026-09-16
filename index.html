@@ -130,7 +130,7 @@
                             <button class="btn-submit" id="api-update-btn" style="margin: 0; background: #2b5876; display: flex; gap: 6px;" onclick="fetchTaiwanStockPrices()">
                                 <span>🔄</span> 自動更新台股收盤價
                             </button>
-                            <span style="font-size: 12px; color: #999;">(支援名稱模糊比對與代號，盤後直連證交所抓取資料)</span>
+                            <span style="font-size: 12px; color: #999;">(⚠️ 採用量化專用庫，標的名稱請務必輸入「純數字代號」如 2330)</span>
                         </div>
                     </div>
                 </div>
@@ -239,12 +239,11 @@
     <script>
         const todayStr = new Date().toLocaleDateString('zh-CA');
         
-        // --- 讀取與【尋回丟失的資料】 ---
+        // --- 讀取資料 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || JSON.parse(localStorage.getItem('trading_targets')) || [];
         let accountCapital = parseFloat(localStorage.getItem('trading_capital')) || 0;
         document.getElementById('account-capital').value = accountCapital;
         
-        // 優先讀取新版，若無則自動找回舊版資料，完美解決資料消失問題！
         let notes = JSON.parse(localStorage.getItem('trading_notes_v2')) || JSON.parse(localStorage.getItem('trading_notes')) || [];
         let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca_v2')) || JSON.parse(localStorage.getItem('trading_pdca')) || [];
         let currentEditingId = null;
@@ -276,7 +275,7 @@
                     <tr>
                         <td><input type="date" value="${item.date || todayStr}" onchange="updateTarget(${index}, 'date', this.value)"></td>
                         <td><select onchange="updateTarget(${index}, 'market', this.value)"><option value="台股" ${item.market==='台股'?'selected':''}>台股</option><option value="大宗" ${item.market==='大宗'?'selected':''}>大宗</option></select></td>
-                        <td><input type="text" value="${item.name}" onchange="updateTarget(${index}, 'name', this.value)" placeholder="標的"></td>
+                        <td><input type="text" value="${item.name}" onchange="updateTarget(${index}, 'name', this.value)" placeholder="標的代號"></td>
                         <td><select onchange="updateTarget(${index}, 'type', this.value)"><option value="融資" ${item.type==='融資'?'selected':''}>融資</option><option value="期貨" ${item.type==='期貨'?'selected':''}>期貨</option><option value="現股" ${item.type==='現股'?'selected':''}>現股</option></select></td>
                         <td><select onchange="updateTarget(${index}, 'stage', this.value)"><option value="觀察中" ${item.stage==='觀察中'?'selected':''}>🔍 觀察中</option><option value="已佈局" ${item.stage==='已佈局'?'selected':''}>📈 已佈局</option></select></td>
                         <td><input type="number" value="${item.qty}" onchange="updateTarget(${index}, 'qty', this.value)"></td>
@@ -295,113 +294,73 @@
         function deleteTarget(index) { if(confirm('確定刪除？')) { targets.splice(index, 1); saveTargets(); renderTargets(); } }
         function saveTargets() { localStorage.setItem('trading_targets_v3', JSON.stringify(targets)); }
 
-        // --- 智慧多節點切換 API 抓取引擎 ---
+        // --- 核心：採用量化專用 FinMind API 抓取收盤價 ---
         async function fetchTaiwanStockPrices() {
             const btn = document.getElementById('api-update-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span>⏳</span> 正在多節點切換抓取資料...';
+            btn.innerHTML = '<span>⏳</span> 正在連線專屬資料庫抓取收盤價...';
             btn.style.opacity = '0.7';
             btn.disabled = true;
 
-            const twseUrl = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
-            const tpexUrl = 'https://www.tpex.org.tw/openapi/v1/t187ap03_L';
-
-            // 建立多策略抓取函數
-            async function fetchDataWithFallback(url) {
-                // 策略 1: 直接連線 (速度最快，但可能被瀏覽器 CORS 阻擋)
-                try {
-                    const r1 = await fetch(url);
-                    if(r1.ok) return await r1.json();
-                } catch(e) {}
-                
-                // 策略 2: allorigins 備用節點
-                try {
-                    const r2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-                    if(r2.ok) return await r2.json();
-                } catch(e) {}
-
-                // 策略 3: codetabs 備用節點 (雙重保險)
-                try {
-                    const r3 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
-                    if(r3.ok) return await r3.json();
-                } catch(e) {}
-
-                return null;
-            }
-
             try {
-                // 同時啟動上市與上櫃的資料抓取
-                const [twseData, tpexData] = await Promise.all([
-                    fetchDataWithFallback(twseUrl),
-                    fetchDataWithFallback(tpexUrl)
-                ]);
-
-                if (!twseData && !tpexData) {
-                    alert('❌ 無法取得報價，所有連線節點均失敗。可能是證交所伺服器維護中。');
-                    return;
-                }
-
-                const priceMap = {};
-                
-                if (twseData) {
-                    twseData.forEach(item => {
-                        const price = parseFloat(item.ClosingPrice);
-                        if (!isNaN(price)) {
-                            priceMap[item.Code] = price;
-                            priceMap[item.Name] = price;
-                        }
-                    });
-                }
-                
-                if (tpexData) {
-                    tpexData.forEach(item => {
-                        const price = parseFloat(item.Close);
-                        if (!isNaN(price)) {
-                            priceMap[item.SecuritiesCompanyCode] = price;
-                            priceMap[item.CompanyName] = price;
-                        }
-                    });
-                }
-
-                // 更新表格與 AI 模糊比對
                 let updatedCount = 0;
-                targets.forEach((target, index) => {
+                
+                // 取得 7 天前的日期作為 start_date，確保休假或週末也有最近一筆資料
+                const d = new Date();
+                d.setDate(d.getDate() - 7);
+                const startDate = d.toISOString().split('T')[0];
+
+                // 使用 Promise.all 讓所有標的同時發送請求，加快速度
+                const promises = targets.map(async (target, index) => {
                     if (target.market === '台股' && target.name.trim() !== '') {
-                        const queryKey = target.name.trim();
-                        let newPrice = priceMap[queryKey]; // 先做精確尋找
+                        const stockId = target.name.trim();
                         
-                        // 若找不到，啟動模糊尋找 (例如輸入 "期元大S&P黃" 自動配對 "期元大S&P黃金")
-                        if (newPrice === undefined) {
-                            const matchedKey = Object.keys(priceMap).find(k => k.includes(queryKey) || queryKey.includes(k));
-                            if (matchedKey) newPrice = priceMap[matchedKey];
-                        }
-                        
-                        if (newPrice !== undefined && target.price !== newPrice) {
-                            target.price = newPrice;
-                            updatedCount++;
-                            // 給一個視覺上的短暫閃爍提示
-                            setTimeout(() => {
-                                const inputEl = document.getElementById(`price-${index}`);
-                                if(inputEl) {
-                                    inputEl.style.backgroundColor = '#e6f4ea';
-                                    setTimeout(() => inputEl.style.backgroundColor = 'transparent', 2000);
+                        // 確保輸入的是代號 (英數字)，避免將純中文送給 API 造成錯誤
+                        if (/^[A-Za-z0-9]+$/.test(stockId)) {
+                            const url = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${stockId}&start_date=${startDate}`;
+                            try {
+                                const res = await fetch(url);
+                                const json = await res.json();
+                                
+                                if (json.msg === 'success' && json.data && json.data.length > 0) {
+                                    // 取得回傳陣列中的最後一筆 (最新交易日) 的收盤價
+                                    const latestData = json.data[json.data.length - 1];
+                                    const newPrice = latestData.close;
+                                    
+                                    if (newPrice !== undefined && target.price !== newPrice) {
+                                        target.price = newPrice;
+                                        updatedCount++;
+                                        
+                                        // 更新視覺提示
+                                        setTimeout(() => {
+                                            const inputEl = document.getElementById(`price-${index}`);
+                                            if(inputEl) {
+                                                inputEl.style.backgroundColor = '#e6f4ea';
+                                                setTimeout(() => inputEl.style.backgroundColor = 'transparent', 2000);
+                                            }
+                                        }, 100);
+                                    }
                                 }
-                            }, 100);
+                            } catch (err) {
+                                console.error(`Fetch error for ${stockId}:`, err);
+                            }
                         }
                     }
                 });
 
+                await Promise.all(promises);
+
                 if (updatedCount > 0) {
                     saveTargets();
                     renderTargets();
-                    alert(`✅ 成功為您更新了 ${updatedCount} 筆台股最新收盤價！`);
+                    alert(`✅ 成功更新了 ${updatedCount} 筆台股最新收盤價！`);
                 } else {
-                    alert('⚠️ 資料抓取成功，但沒有找到符合的標的。\n請確認：\n1. 市場是否選「台股」。\n2. 建議直接輸入「股票代號」(例如 00635U 或 2330) 最精準！');
+                    alert('⚠️ 檢查完畢，沒有發現需要更新的報價。\n\n💡 小提醒：\n為配合此穩定版資料庫，標的名稱請務必輸入「純數字股票代號」(例如：請將台積電改為 2330)。');
                 }
 
             } catch (error) {
                 console.error("API 抓取失敗:", error);
-                alert('❌ 發生未知的程式錯誤。');
+                alert('❌ 無法取得報價，請檢查網路連線。');
             } finally {
                 btn.innerHTML = originalText;
                 btn.style.opacity = '1';
