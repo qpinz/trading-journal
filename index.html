@@ -61,9 +61,11 @@
         .note-header { margin-bottom: 15px; border-bottom: 1px solid #f1f1f0; padding-bottom: 15px; }
         .note-title { font-size: 18px; font-weight: 700; margin: 0 0 5px 0; }
         .note-meta { font-size: 12px; color: #787774; }
-        .note-body { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .note-body { gap: 30px; }
         .note-section h5 { margin: 0 0 8px 0; font-size: 14px; color: #37352f; }
-        .note-section p { margin: 0; font-size: 13px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
+        .note-section p { margin: 0; font-size: 14px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
+        .note-link { color: #2b5876; text-decoration: none; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; background: #e8f0fe; padding: 4px 10px; border-radius: 4px; margin-bottom: 15px; }
+        .note-link:hover { background: #d2e3fc; }
 
         /* PDCA 覆盤樣式 */
         .pdca-header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #ededed; padding-bottom: 15px; margin-bottom: 20px; }
@@ -102,7 +104,7 @@
                     <h4>📁 資料庫</h4>
                     <div class="sidebar-item active" onclick="switchView('table')">🎯 投資標的&績效</div>
                     <div class="sidebar-item" onclick="switchView('account')">💼 總帳戶風控總覽</div>
-                    <div class="sidebar-item" onclick="switchView('notes')">🔖 投資分析&筆記 (報告區)</div>
+                    <div class="sidebar-item" onclick="switchView('notes')">🔖 投資分析&筆記 (收藏區)</div>
                     <div class="sidebar-item" onclick="switchView('pdca')">📝 PDCA 交易日誌覆盤</div>
                 </div>
                 <div class="sidebar-box box-gray">
@@ -150,21 +152,35 @@
                     </div>
                 </div>
 
-                <!-- 視圖 3：投資分析與筆記 -->
+                <!-- 視圖 3：投資分析與筆記 (自由寫作版) -->
                 <div id="view-notes" class="view-section">
-                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 15px;">🔖 投資分析&筆記</div>
+                    <div style="font-size: 22px; font-weight: 600; margin-bottom: 15px;">🔖 投資分析&筆記 (收藏區)</div>
                     <div class="note-form">
                         <div class="form-row">
-                            <div class="form-col" style="flex: 2;"><label>Aa 報告標題</label><input type="text" id="note-title" placeholder="例如：PCB 族群大漲與精煉銅連動分析"></div>
-                            <div class="form-col"><label>◎ 類別</label><select id="note-type"><option value="產業研報">產業研報</option><option value="總經動向">總經動向</option></select></div>
-                            <div class="form-col"><label>↗ 關聯標的</label><input type="text" id="note-target" placeholder="例如：銅/PCB"></div>
+                            <div class="form-col" style="flex: 2;"><label>Aa 筆記/報告標題</label><input type="text" id="note-title" placeholder="例如：PCB 族群大漲與精煉銅連動分析"></div>
+                            <div class="form-col"><label>◎ 類別</label>
+                                <select id="note-type">
+                                    <option value="產業研報">產業研報</option>
+                                    <option value="總經動向">總經動向</option>
+                                    <option value="交易靈感">交易靈感</option>
+                                    <option value="好文收藏">好文收藏</option>
+                                </select>
+                            </div>
+                            <div class="form-col"><label>↗ 關聯標的</label><input type="text" id="note-target" placeholder="例如：銅/2330"></div>
                         </div>
-                        <div class="form-row"><div class="form-col"><label>🔍 核心關鍵摘要</label><textarea id="note-summary" placeholder="紀錄報告中的重點數據與推演邏輯..."></textarea></div></div>
                         <div class="form-row">
-                            <div class="form-col"><label>⚠️ 投資風險與反向查證 (不預設立場)</label><textarea id="note-risk" placeholder="潛在風險，例如產能過剩疑慮..."></textarea></div>
-                            <div class="form-col"><label>🎯 投資行動啟發</label><textarea id="note-action" placeholder="具體的應對策略、進場條件與停損設定..."></textarea></div>
+                            <div class="form-col">
+                                <label>🔗 參考連結 (選填)</label>
+                                <input type="text" id="note-link" placeholder="貼上文章、新聞或研究報告的網址...">
+                            </div>
                         </div>
-                        <div style="text-align: right;"><button class="btn-submit" onclick="saveNewNote()">儲存分析筆記</button></div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>📝 筆記內容 (支援自由書寫、文章節錄與心得)</label>
+                                <textarea id="note-content" placeholder="自由紀錄您的觀察、直接貼上文章重點段落，或是寫下這則資訊對你操作的啟發..." style="min-height: 120px;"></textarea>
+                            </div>
+                        </div>
+                        <div style="text-align: right;"><button class="btn-submit" onclick="saveNewNote()">儲存筆記</button></div>
                     </div>
                     <div id="notes-list"></div>
                 </div>
@@ -239,7 +255,7 @@
     <script>
         const todayStr = new Date().toLocaleDateString('zh-CA');
         
-        // --- 讀取資料 ---
+        // --- 讀取與【尋回丟失的資料】 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || JSON.parse(localStorage.getItem('trading_targets')) || [];
         let accountCapital = parseFloat(localStorage.getItem('trading_capital')) || 0;
         document.getElementById('account-capital').value = accountCapital;
@@ -304,34 +320,24 @@
 
             try {
                 let updatedCount = 0;
-                
-                // 取得 7 天前的日期作為 start_date，確保休假或週末也有最近一筆資料
                 const d = new Date();
                 d.setDate(d.getDate() - 7);
                 const startDate = d.toISOString().split('T')[0];
 
-                // 使用 Promise.all 讓所有標的同時發送請求，加快速度
                 const promises = targets.map(async (target, index) => {
                     if (target.market === '台股' && target.name.trim() !== '') {
                         const stockId = target.name.trim();
-                        
-                        // 確保輸入的是代號 (英數字)，避免將純中文送給 API 造成錯誤
                         if (/^[A-Za-z0-9]+$/.test(stockId)) {
                             const url = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${stockId}&start_date=${startDate}`;
                             try {
                                 const res = await fetch(url);
                                 const json = await res.json();
-                                
                                 if (json.msg === 'success' && json.data && json.data.length > 0) {
-                                    // 取得回傳陣列中的最後一筆 (最新交易日) 的收盤價
                                     const latestData = json.data[json.data.length - 1];
                                     const newPrice = latestData.close;
-                                    
                                     if (newPrice !== undefined && target.price !== newPrice) {
                                         target.price = newPrice;
                                         updatedCount++;
-                                        
-                                        // 更新視覺提示
                                         setTimeout(() => {
                                             const inputEl = document.getElementById(`price-${index}`);
                                             if(inputEl) {
@@ -357,7 +363,6 @@
                 } else {
                     alert('⚠️ 檢查完畢，沒有發現需要更新的報價。\n\n💡 小提醒：\n為配合此穩定版資料庫，標的名稱請務必輸入「純數字股票代號」(例如：請將台積電改為 2330)。');
                 }
-
             } catch (error) {
                 console.error("API 抓取失敗:", error);
                 alert('❌ 無法取得報價，請檢查網路連線。');
@@ -389,38 +394,73 @@
             pnlEl.style.color = totalPnL > 0 ? '#d94228' : (totalPnL < 0 ? '#438767' : '#37352f');
         }
 
-        // --- 投資筆記 ---
+        // ==========================================
+        // 投資筆記 (改為自由填寫與網址收藏)
+        // ==========================================
         function renderNotes() {
             const list = document.getElementById('notes-list');
             list.innerHTML = '';
             [...notes].reverse().forEach(note => {
+                // 相容舊資料：如果舊資料有 summary 等，將其合併成一段顯示
+                let displayContent = note.content || '';
+                if (!displayContent && (note.summary || note.risk || note.action)) {
+                    displayContent = `【摘要】\n${note.summary || ''}\n\n【風險】\n${note.risk || ''}\n\n【行動】\n${note.action || ''}`;
+                }
+
+                // 產生超連結按鈕
+                let linkHtml = '';
+                if (note.link && note.link.trim() !== '') {
+                    // 自動加上 https 若使用者只貼了 www
+                    let url = note.link.trim();
+                    if (!url.startsWith('http')) url = 'https://' + url;
+                    linkHtml = `<a href="${url}" target="_blank" class="note-link">🔗 點擊前往參考連結</a>`;
+                }
+
                 list.innerHTML += `
                     <div class="note-card">
                         <button class="btn-delete" style="position: absolute; right: 15px; top: 15px;" onclick="deleteNote(${note.id})">✖ 刪除</button>
-                        <div class="note-header"><h3 class="note-title">📑 ${note.title}</h3><div class="note-meta">${note.type} | 標的: ${note.target} | ${note.date}</div></div>
-                        <div class="note-body">
-                            <div>
-                                <div class="note-section"><h5>🔍 核心關鍵摘要</h5><p>${note.summary}</p></div>
-                                <div class="note-section" style="margin-top: 15px;"><h5 style="color: #c62828;">⚠️ 投資風險與反向查證</h5><p>${note.risk}</p></div>
-                            </div>
-                            <div style="background: #fdfdfc; padding: 15px; border-radius: 6px; border: 1px solid #f1f1f0;">
-                                <div class="note-section"><h5 style="color: #1e6235;">🎯 投資行動啟發</h5><p>${note.action}</p></div>
-                            </div>
+                        <div class="note-header">
+                            <h3 class="note-title">📑 ${note.title}</h3>
+                            <div class="note-meta">${note.type} | 標的: ${note.target} | ${note.date}</div>
+                        </div>
+                        <div class="note-body" style="display: block;">
+                            ${linkHtml}
+                            <div class="note-section"><p>${displayContent}</p></div>
                         </div>
                     </div>`;
             });
         }
+
         function saveNewNote() {
             const title = document.getElementById('note-title').value;
             if(!title) return alert('請輸入標題');
-            notes.push({ id: Date.now(), date: todayStr, title: title, type: document.getElementById('note-type').value, target: document.getElementById('note-target').value, summary: document.getElementById('note-summary').value, risk: document.getElementById('note-risk').value, action: document.getElementById('note-action').value });
+            
+            notes.push({ 
+                id: Date.now(), 
+                date: todayStr, 
+                title: title, 
+                type: document.getElementById('note-type').value, 
+                target: document.getElementById('note-target').value, 
+                link: document.getElementById('note-link').value,
+                content: document.getElementById('note-content').value 
+            });
+            
             localStorage.setItem('trading_notes_v2', JSON.stringify(notes));
-            ['title','target','summary','risk','action'].forEach(id => document.getElementById(`note-${id}`).value = '');
+            ['title','target','link','content'].forEach(id => document.getElementById(`note-${id}`).value = '');
             renderNotes();
         }
-        function deleteNote(id) { if(confirm('刪除這篇筆記？')) { notes = notes.filter(n => n.id !== id); localStorage.setItem('trading_notes_v2', JSON.stringify(notes)); renderNotes(); } }
 
-        // --- PDCA 覆盤 ---
+        function deleteNote(id) { 
+            if(confirm('刪除這篇筆記？')) { 
+                notes = notes.filter(n => n.id !== id); 
+                localStorage.setItem('trading_notes_v2', JSON.stringify(notes)); 
+                renderNotes(); 
+            } 
+        }
+
+        // ==========================================
+        // PDCA 覆盤
+        // ==========================================
         function renderPdcaList() {
             const tbody = document.getElementById('pdca-list-body');
             tbody.innerHTML = '';
