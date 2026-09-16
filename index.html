@@ -127,7 +127,6 @@
                         </table>
                         <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
                             <button class="btn-add" style="width: auto;" onclick="addTargetRow()">+ 新增一筆標的</button>
-                            <!-- API 自動更新報價按鈕 -->
                             <button class="btn-submit" id="api-update-btn" style="margin: 0; background: #2b5876; display: flex; gap: 6px;" onclick="fetchTaiwanStockPrices()">
                                 <span>🔄</span> 自動更新台股收盤價
                             </button>
@@ -240,13 +239,14 @@
     <script>
         const todayStr = new Date().toLocaleDateString('zh-CA');
         
-        // --- 讀取資料 ---
-        let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || [];
+        // --- 讀取與【尋回丟失的資料】 ---
+        let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || JSON.parse(localStorage.getItem('trading_targets')) || [];
         let accountCapital = parseFloat(localStorage.getItem('trading_capital')) || 0;
         document.getElementById('account-capital').value = accountCapital;
         
-        let notes = JSON.parse(localStorage.getItem('trading_notes_v2')) || [];
-        let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca_v2')) || [];
+        // 優先讀取新版，若無則自動找回舊版資料，完美解決資料消失問題！
+        let notes = JSON.parse(localStorage.getItem('trading_notes_v2')) || JSON.parse(localStorage.getItem('trading_notes')) || [];
+        let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca_v2')) || JSON.parse(localStorage.getItem('trading_pdca')) || [];
         let currentEditingId = null;
 
         // --- 導覽切換 ---
@@ -295,25 +295,55 @@
         function deleteTarget(index) { if(confirm('確定刪除？')) { targets.splice(index, 1); saveTargets(); renderTargets(); } }
         function saveTargets() { localStorage.setItem('trading_targets_v3', JSON.stringify(targets)); }
 
-        // --- 核心：直連證交所 API + AI 模糊比對 ---
+        // --- 智慧多節點切換 API 抓取引擎 ---
         async function fetchTaiwanStockPrices() {
             const btn = document.getElementById('api-update-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span>⏳</span> 正在直接連線證交所...';
+            btn.innerHTML = '<span>⏳</span> 正在多節點切換抓取資料...';
             btn.style.opacity = '0.7';
             btn.disabled = true;
 
-            try {
-                const priceMap = {};
+            const twseUrl = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
+            const tpexUrl = 'https://www.tpex.org.tw/openapi/v1/t187ap03_L';
+
+            // 建立多策略抓取函數
+            async function fetchDataWithFallback(url) {
+                // 策略 1: 直接連線 (速度最快，但可能被瀏覽器 CORS 阻擋)
+                try {
+                    const r1 = await fetch(url);
+                    if(r1.ok) return await r1.json();
+                } catch(e) {}
                 
-                // 1. 直接連線上市與上櫃資料 (不再透過容易失敗的代理)
-                const [twseRes, tpexRes] = await Promise.all([
-                    fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL').catch(() => null),
-                    fetch('https://www.tpex.org.tw/openapi/v1/t187ap03_L').catch(() => null)
+                // 策略 2: allorigins 備用節點
+                try {
+                    const r2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    if(r2.ok) return await r2.json();
+                } catch(e) {}
+
+                // 策略 3: codetabs 備用節點 (雙重保險)
+                try {
+                    const r3 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
+                    if(r3.ok) return await r3.json();
+                } catch(e) {}
+
+                return null;
+            }
+
+            try {
+                // 同時啟動上市與上櫃的資料抓取
+                const [twseData, tpexData] = await Promise.all([
+                    fetchDataWithFallback(twseUrl),
+                    fetchDataWithFallback(tpexUrl)
                 ]);
 
-                if (twseRes && twseRes.ok) {
-                    const twseData = await twseRes.json();
+                if (!twseData && !tpexData) {
+                    alert('❌ 無法取得報價，所有連線節點均失敗。可能是證交所伺服器維護中。');
+                    return;
+                }
+
+                const priceMap = {};
+                
+                if (twseData) {
                     twseData.forEach(item => {
                         const price = parseFloat(item.ClosingPrice);
                         if (!isNaN(price)) {
@@ -322,9 +352,8 @@
                         }
                     });
                 }
-
-                if (tpexRes && tpexRes.ok) {
-                    const tpexData = await tpexRes.json();
+                
+                if (tpexData) {
                     tpexData.forEach(item => {
                         const price = parseFloat(item.Close);
                         if (!isNaN(price)) {
@@ -334,16 +363,14 @@
                     });
                 }
 
-                // 2. 更新表格並加入智慧模糊比對
+                // 更新表格與 AI 模糊比對
                 let updatedCount = 0;
                 targets.forEach((target, index) => {
                     if (target.market === '台股' && target.name.trim() !== '') {
                         const queryKey = target.name.trim();
+                        let newPrice = priceMap[queryKey]; // 先做精確尋找
                         
-                        // 先做精確比對
-                        let newPrice = priceMap[queryKey];
-                        
-                        // 如果找不到，啟動 AI 模糊比對 (解決 "期元大S&P黃" 找不准的問題)
+                        // 若找不到，啟動模糊尋找 (例如輸入 "期元大S&P黃" 自動配對 "期元大S&P黃金")
                         if (newPrice === undefined) {
                             const matchedKey = Object.keys(priceMap).find(k => k.includes(queryKey) || queryKey.includes(k));
                             if (matchedKey) newPrice = priceMap[matchedKey];
@@ -352,6 +379,7 @@
                         if (newPrice !== undefined && target.price !== newPrice) {
                             target.price = newPrice;
                             updatedCount++;
+                            // 給一個視覺上的短暫閃爍提示
                             setTimeout(() => {
                                 const inputEl = document.getElementById(`price-${index}`);
                                 if(inputEl) {
@@ -368,12 +396,12 @@
                     renderTargets();
                     alert(`✅ 成功為您更新了 ${updatedCount} 筆台股最新收盤價！`);
                 } else {
-                    alert('⚠️ 連線成功，但沒有找到對應的標的。\n\n小提醒：\n1. 請確認市場有選「台股」。\n2. 建議直接輸入「股票代號」(例如 00635U 或 2330) 最準確！');
+                    alert('⚠️ 資料抓取成功，但沒有找到符合的標的。\n請確認：\n1. 市場是否選「台股」。\n2. 建議直接輸入「股票代號」(例如 00635U 或 2330) 最精準！');
                 }
 
             } catch (error) {
                 console.error("API 抓取失敗:", error);
-                alert('❌ 無法取得報價。可能是證交所伺服器維護中，或您的網路環境阻擋了連線。');
+                alert('❌ 發生未知的程式錯誤。');
             } finally {
                 btn.innerHTML = originalText;
                 btn.style.opacity = '1';
@@ -433,7 +461,7 @@
         }
         function deleteNote(id) { if(confirm('刪除這篇筆記？')) { notes = notes.filter(n => n.id !== id); localStorage.setItem('trading_notes_v2', JSON.stringify(notes)); renderNotes(); } }
 
-        // --- PDCA 覆盤與圖片 ---
+        // --- PDCA 覆盤 ---
         function renderPdcaList() {
             const tbody = document.getElementById('pdca-list-body');
             tbody.innerHTML = '';
