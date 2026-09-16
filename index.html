@@ -11,6 +11,7 @@
         .header-title { font-size: 36px; font-weight: 700; margin: 25px 0 10px 0; border-bottom: 1px solid #ededed; padding-bottom: 15px; }
         .header-desc { font-size: 14px; color: #787774; margin-bottom: 25px; line-height: 1.6; }
         
+        /* 佈局 */
         .main-layout { display: flex; gap: 30px; align-items: flex-start; }
         .sidebar { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
         .sidebar-box { padding: 15px; border-radius: 8px; font-size: 14px; }
@@ -23,6 +24,7 @@
         .view-section { display: none; }
         .view-section.active { display: block; }
         
+        /* 表格樣式 */
         .table-container { overflow-x: auto; margin-top: 10px; border: 1px solid #ededed; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
         th, td { padding: 8px 10px; border-bottom: 1px solid #ededed; border-right: 1px solid #ededed; white-space: nowrap; }
@@ -41,11 +43,13 @@
         .profit { color: #d94228; }
         .loss { color: #438767; }
 
+        /* 風控儀表板樣式 */
         .risk-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
         .risk-card { background: #fafafa; border: 1px solid #e1e1e1; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .risk-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #787774; display: flex; align-items: center; gap: 6px; }
         .risk-value { font-size: 32px; font-weight: 700; color: #37352f; }
 
+        /* 筆記區塊樣式 */
         .note-form { background: #fdfdfc; border: 1px solid #ededed; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-col { flex: 1; }
@@ -61,6 +65,7 @@
         .note-section h5 { margin: 0 0 8px 0; font-size: 14px; color: #37352f; }
         .note-section p { margin: 0; font-size: 13px; line-height: 1.6; color: #37352f; white-space: pre-wrap; }
 
+        /* PDCA 覆盤樣式 */
         .pdca-header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #ededed; padding-bottom: 15px; margin-bottom: 20px; }
         .pdca-title-input { font-size: 24px; font-weight: 700; border: none; outline: none; width: 100%; font-family: inherit; }
         .pdca-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -76,6 +81,7 @@
         .back-btn { background: #f1f1f0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 5px; }
         .back-btn:hover { background: #e3e2e0; }
 
+        /* 圖片上傳區塊樣式 */
         .image-upload-area { border: 2px dashed #ddd; border-radius: 6px; padding: 20px; text-align: center; background: #fff; cursor: pointer; position: relative; transition: border-color 0.2s; }
         .image-upload-area:hover { border-color: #37352f; }
         .image-preview-container { display: none; position: relative; margin-top: 10px; }
@@ -125,7 +131,7 @@
                             <button class="btn-submit" id="api-update-btn" style="margin: 0; background: #2b5876; display: flex; gap: 6px;" onclick="fetchTaiwanStockPrices()">
                                 <span>🔄</span> 自動更新台股收盤價
                             </button>
-                            <span style="font-size: 12px; color: #999;">(支援名稱與代號，盤後自動抓取證交所與櫃買中心資料)</span>
+                            <span style="font-size: 12px; color: #999;">(支援名稱模糊比對與代號，盤後直連證交所抓取資料)</span>
                         </div>
                     </div>
                 </div>
@@ -234,6 +240,7 @@
     <script>
         const todayStr = new Date().toLocaleDateString('zh-CA');
         
+        // --- 讀取資料 ---
         let targets = JSON.parse(localStorage.getItem('trading_targets_v3')) || [];
         let accountCapital = parseFloat(localStorage.getItem('trading_capital')) || 0;
         document.getElementById('account-capital').value = accountCapital;
@@ -242,6 +249,7 @@
         let pdcaLogs = JSON.parse(localStorage.getItem('trading_pdca_v2')) || [];
         let currentEditingId = null;
 
+        // --- 導覽切換 ---
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
@@ -253,7 +261,9 @@
             if(viewName === 'account') calculateRisk();
         }
 
-        // --- 標的與風控 ---
+        // ==========================================
+        // 標的與風控
+        // ==========================================
         function renderTargets() {
             const tbody = document.getElementById('target-body');
             tbody.innerHTML = '';
@@ -285,21 +295,24 @@
         function deleteTarget(index) { if(confirm('確定刪除？')) { targets.splice(index, 1); saveTargets(); renderTargets(); } }
         function saveTargets() { localStorage.setItem('trading_targets_v3', JSON.stringify(targets)); }
 
-        // --- 透過 CORS 代理伺服器抓取台股 OpenAPI 報價 ---
+        // --- 核心：直連證交所 API + AI 模糊比對 ---
         async function fetchTaiwanStockPrices() {
             const btn = document.getElementById('api-update-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span>⏳</span> 正在透過代理伺服器抓取資料...';
+            btn.innerHTML = '<span>⏳</span> 正在直接連線證交所...';
             btn.style.opacity = '0.7';
             btn.disabled = true;
 
             try {
                 const priceMap = {};
                 
-                // 1. 抓取上市資料 (TWSE)
-                const twseUrl = encodeURIComponent('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL');
-                const twseRes = await fetch(`https://api.allorigins.win/raw?url=${twseUrl}`);
-                if (twseRes.ok) {
+                // 1. 直接連線上市與上櫃資料 (不再透過容易失敗的代理)
+                const [twseRes, tpexRes] = await Promise.all([
+                    fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL').catch(() => null),
+                    fetch('https://www.tpex.org.tw/openapi/v1/t187ap03_L').catch(() => null)
+                ]);
+
+                if (twseRes && twseRes.ok) {
                     const twseData = await twseRes.json();
                     twseData.forEach(item => {
                         const price = parseFloat(item.ClosingPrice);
@@ -310,10 +323,7 @@
                     });
                 }
 
-                // 2. 抓取上櫃資料 (TPEx)
-                const tpexUrl = encodeURIComponent('https://www.tpex.org.tw/openapi/v1/t187ap03_L');
-                const tpexRes = await fetch(`https://api.allorigins.win/raw?url=${tpexUrl}`);
-                if (tpexRes.ok) {
+                if (tpexRes && tpexRes.ok) {
                     const tpexData = await tpexRes.json();
                     tpexData.forEach(item => {
                         const price = parseFloat(item.Close);
@@ -324,12 +334,20 @@
                     });
                 }
 
-                // 3. 更新表格
+                // 2. 更新表格並加入智慧模糊比對
                 let updatedCount = 0;
                 targets.forEach((target, index) => {
                     if (target.market === '台股' && target.name.trim() !== '') {
                         const queryKey = target.name.trim();
-                        const newPrice = priceMap[queryKey];
+                        
+                        // 先做精確比對
+                        let newPrice = priceMap[queryKey];
+                        
+                        // 如果找不到，啟動 AI 模糊比對 (解決 "期元大S&P黃" 找不准的問題)
+                        if (newPrice === undefined) {
+                            const matchedKey = Object.keys(priceMap).find(k => k.includes(queryKey) || queryKey.includes(k));
+                            if (matchedKey) newPrice = priceMap[matchedKey];
+                        }
                         
                         if (newPrice !== undefined && target.price !== newPrice) {
                             target.price = newPrice;
@@ -350,12 +368,12 @@
                     renderTargets();
                     alert(`✅ 成功為您更新了 ${updatedCount} 筆台股最新收盤價！`);
                 } else {
-                    alert('⚠️ 資料抓取成功，但沒有找到對應的標的。請確認「市場」是否選擇台股，且名稱或代號是否正確填寫。');
+                    alert('⚠️ 連線成功，但沒有找到對應的標的。\n\n小提醒：\n1. 請確認市場有選「台股」。\n2. 建議直接輸入「股票代號」(例如 00635U 或 2330) 最準確！');
                 }
 
             } catch (error) {
                 console.error("API 抓取失敗:", error);
-                alert('❌ 無法取得報價，可能是代理伺服器網路異常或證交所維護中。');
+                alert('❌ 無法取得報價。可能是證交所伺服器維護中，或您的網路環境阻擋了連線。');
             } finally {
                 btn.innerHTML = originalText;
                 btn.style.opacity = '1';
